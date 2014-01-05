@@ -1,4 +1,4 @@
-A script for launching app and switching windows.
+A script for launching apps and switching windows.
 
 Requires wmctrl: <http://tomas.styblo.name/wmctrl/>  
 On Ubuntu:
