@@ -5,6 +5,10 @@ On Ubuntu:
 
     $ sudo apt-get install wmctrl
 
+
+Usage
+-----
+
 For example, to go to Firefox do:
 
     runraisenext.py firefox
