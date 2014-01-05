@@ -67,12 +67,11 @@ class Window:
         """Focus this window.
 
         """
-        # Focus this window.
         subprocess.call(["wmctrl", "-i", "-a", self.window_id])
 
 
 def run_command(window_spec):
-    """Run the shell command from the given window_sped as a subprocess."""
+    """Run the shell command from the given window_spec as a subprocess."""
     command = window_spec.get("command")
     if command:
         subprocess.call(command, shell=True)
