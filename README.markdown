@@ -98,3 +98,7 @@ all of them at once. For example, to go to the Nautilus file browser window for
 the Foobar folder, do:
 
     runraisenext.py --wm_class .Nautilus --title Foobar
+
+To cycle through all open windows without matching windows, do:
+
+    runraisenext.py --all

@@ -196,12 +196,20 @@ def main():
         help="the alias of a window spec from the config file to use for"
              "matching windows")
 
+    parser.add_argument("-a", "--all", action="store_true",
+        help="cycle through all open windows, instead of matching windows")
+
     # TODO: More command-line options:
-    # -a, --all
     # -c, --current
     # -f, --file (select a non-default config file)
 
     args = parser.parse_args()
+
+    if args.all:
+        open_windows = get_open_windows()
+        current_window = get_current_window(open_windows)
+        loop(open_windows, current_window)
+        return
 
     if args.window_id is not None:
         if (args.desktop or args.pid or args.wm_class or args.machine
