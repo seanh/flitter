@@ -1,8 +1,12 @@
 #!/usr/bin/env python2
 """A script for launching apps and switching windows.
 
+FIXME: Don't crash if the config file doesn't exist
 FIXME: Something is going wrong when there are no open windows on the current
-       desktop.
+       desktop
+TODO: Add a -c, --current option to cycle through all open windows of the
+      current app (using the WM_CLASS of the current window)
+TODO: Add a -f, --file option to specify a non-default config file
 
 """
 import argparse
