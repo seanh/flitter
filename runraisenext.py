@@ -7,6 +7,7 @@ FIXME: Something is going wrong when there are no open windows on the current
 TODO: Add a -c, --current option to cycle through all open windows of the
       current app (using the WM_CLASS of the current window)
 TODO: Add a -f, --file option to specify a non-default config file
+TODO: Package it up, make it pip installable and with a default config file
 
 """
 import argparse
