@@ -195,10 +195,10 @@ def main():
         help='the window title to look for, e.g. "wmctrl - A command line tool to interact with an EWMH/NetWM compatible X Window Manager. - Mozilla Firefox"')
 
     parser.add_argument('-c', '--command',
-        help="The command to run to launch the app, if no matching windows are found, e.g. firefox")
+        help="the command to run to launch the app, if no matching windows are found, e.g. firefox")
 
     parser.add_argument('alias', nargs='?',
-        help="the alias of a window spec from the config file to use for"
+        help="the alias of a window spec from the config file to use for "
              "matching windows")
 
     parser.add_argument("-a", "--all", action="store_true",
