@@ -21,7 +21,7 @@ class Window:
 
     """
     def __init__(self, line):
-        """
+        """Initialise a new Window object.
 
         :param line: a line representing a window from the output of
                      wmctrl -lxp
@@ -29,15 +29,13 @@ class Window:
 
         """
         self.line = line
-        parts = line.split(None, 5)
-        assert len(parts) in (5,6)
-        self.window_id = parts[0]
-        self.desktop = parts[1]
-        self.pid = parts[2]
-        self.wm_class = parts[3]
-        self.machine = parts[4]
-        if len(parts) == 6:
-            self.title = parts[5].strip()
+        self.window_id, self.desktop, self.pid, rest = line.split(None, 3)
+        self.wm_class, rest = rest.split('  ', 1)
+        parts = rest.split(None, 1)
+        assert len(parts) in (1,2)
+        self.machine = parts[0]
+        if len(parts) == 2:
+            self.title = parts[1]
         else:
             self.title = ''
 
