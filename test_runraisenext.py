@@ -14,18 +14,11 @@ def test_launching_apps(get_open_windows_function, run_command_function):
     the window spec's command.
 
     """
-    def get_open_windows():
-        """Mock _get_open_windows_from_wmctrl() function.
-
-        Returns mock wmctrl -lxp output.
-
-        """
-        return (
-            '0x03e0000c  0 4464   gnome-terminal.Gnome-terminal  mistakenot '
-            'tmux  /home/vagrant\n'
-            '0x042000b3  0 4904   Mail.Thunderbird      mistakenot Inbox - '
-            'Unified Folders - Mozilla Thunderbird\n')
-    get_open_windows_function.side_effect = get_open_windows
+    get_open_windows_function.return_value = (
+        '0x03e0000c  0 4464   gnome-terminal.Gnome-terminal  mistakenot '
+        'tmux  /home/vagrant\n'
+        '0x042000b3  0 4904   Mail.Thunderbird      mistakenot Inbox - '
+        'Unified Folders - Mozilla Thunderbird\n')
 
     # Test it with a few different apps from the config file, for good measure.
     apps = [
@@ -50,35 +43,21 @@ def test_focusing_apps(get_current_window_function, get_open_windows_function,
     is not focused, it should focus that window.
 
     """
-    def get_open_windows():
-        """Mock _get_open_windows_from_wmctrl() function.
+    # FIXME: This isn't perfect: non-ASCII characters have been removed
+    # from the mock output.
+    get_open_windows_function.return_value = (
+        '0x02c000b3  0 4346   Navigator.Firefox     mistakenot The Mock '
+        'Class - Mock 1.0.1 documentation - Vimperator\n'
+        '0x03e0000c  0 4464   gnome-terminal.Gnome-terminal  mistakenot '
+        'tmux  /home/vagrant\n'
+        '0x05600003  0 12022  gvim.Gvim             mistakenot '
+        'test_runraisenext.py (~/Projects/runraisenext) - GVIM1\n'
+        '0x0580002b  0 15150  skype.Skype           mistakenot foobar - '
+        'Skype\n')
 
-        Returns mock wmctrl -lxp output.
-
-        """
-        # FIXME: This isn't perfect: non-ASCII characters have been removed
-        # from the mock output.
-        return (
-            '0x02c000b3  0 4346   Navigator.Firefox     mistakenot The Mock '
-            'Class - Mock 1.0.1 documentation - Vimperator\n'
-            '0x03e0000c  0 4464   gnome-terminal.Gnome-terminal  mistakenot '
-            'tmux  /home/vagrant\n'
-            '0x05600003  0 12022  gvim.Gvim             mistakenot '
-            'test_runraisenext.py (~/Projects/runraisenext) - GVIM1\n'
-            '0x0580002b  0 15150  skype.Skype           mistakenot foobar - '
-            'Skype\n')
-    get_open_windows_function.side_effect = get_open_windows
-
-    def _get_current_window():
-        """Mock _get_current_window_from_wmctrl() function.
-
-        Returns mock wmctrl -a :ACTIVE: -v output.
-
-        """
-        # Returns the window ID for firefox from the mock open windows above.
-        return ('envir_utf8: 1\n'
-                'Using window: 0x02c000b3\n')
-    get_current_window_function.side_effect = _get_current_window
+    # Make the Firefox window the currently focused one.
+    get_current_window_function.return_value = ('envir_utf8: 1\n'
+                                                'Using window: 0x02c000b3\n')
 
     # Since Firefox is the open window, runraisenext skype or gvim should
     # raise Skype or gVim.
@@ -103,35 +82,21 @@ def test_app_focused(get_current_window_function, get_open_windows_function,
     is already focused, it should do nothing.
 
     """
-    def get_open_windows():
-        """Mock _get_open_windows_from_wmctrl() function.
+    # FIXME: This isn't perfect: non-ASCII characters have been removed
+    # from the mock output.
+    get_open_windows_function.return_value = (
+        '0x02c000b3  0 4346   Navigator.Firefox     mistakenot The Mock '
+        'Class - Mock 1.0.1 documentation - Vimperator\n'
+        '0x03e0000c  0 4464   gnome-terminal.Gnome-terminal  mistakenot '
+        'tmux  /home/vagrant\n'
+        '0x05600003  0 12022  gvim.Gvim             mistakenot '
+        'test_runraisenext.py (~/Projects/runraisenext) - GVIM1\n'
+        '0x0580002b  0 15150  skype.Skype           mistakenot foobar - '
+        'Skype\n')
 
-        Returns mock wmctrl -lxp output.
-
-        """
-        # FIXME: This isn't perfect: non-ASCII characters have been removed
-        # from the mock output.
-        return (
-            '0x02c000b3  0 4346   Navigator.Firefox     mistakenot The Mock '
-            'Class - Mock 1.0.1 documentation - Vimperator\n'
-            '0x03e0000c  0 4464   gnome-terminal.Gnome-terminal  mistakenot '
-            'tmux  /home/vagrant\n'
-            '0x05600003  0 12022  gvim.Gvim             mistakenot '
-            'test_runraisenext.py (~/Projects/runraisenext) - GVIM1\n'
-            '0x0580002b  0 15150  skype.Skype           mistakenot foobar - '
-            'Skype\n')
-    get_open_windows_function.side_effect = get_open_windows
-
-    def _get_current_window():
-        """Mock _get_current_window_from_wmctrl() function.
-
-        Returns mock wmctrl -a :ACTIVE: -v output.
-
-        """
-        # Returns the window ID for firefox from the mock open windows above.
-        return ('envir_utf8: 1\n'
-                'Using window: 0x02c000b3\n')
-    get_current_window_function.side_effect = _get_current_window
+    # Make the Firefox window the currently focused one.
+    get_current_window_function.return_value = ('envir_utf8: 1\n'
+                                                'Using window: 0x02c000b3\n')
 
     # Since Firefox is the open window, runraisenext sfirefox should do
     # nothing.
@@ -153,27 +118,20 @@ def test_looping(get_current_window_function, get_open_windows_function,
     then it should loop through each of the matching windows.
 
     """
-    def get_open_windows():
-        """Mock _get_open_windows_from_wmctrl() function.
-
-        Returns mock wmctrl -lxp output.
-
-        """
-        # FIXME: This isn't perfect: non-ASCII characters have been removed
-        # from the mock output.
-        # This returns three Gnome Terminal windows, and some other windows.
-        return (
-            '0x02c000b3  0 4346   Navigator.Firefox     mistakenot The Mock '
-            'Class - Mock 1.0.1 documentation - Vimperator\n'
-            '0x03e0000c  0 4464   gnome-terminal.Gnome-terminal  mistakenot '
-            'tmux  /home/vagrant\n'
-            '0x042000b3  0 4904   Mail.Thunderbird      mistakenot Inbox - '
-            'Unified Folders - Mozilla Thunderbird\n'
-            '0x03e005d4  0 4464   gnome-terminal.Gnome-terminal  mistakenot '
-            'fish  /home/seanh/Projects/runraisenext\n'
-            '0x03e03281  0 4464   gnome-terminal.Gnome-terminal  mistakenot '
-            'wmctrl  /home/seanh/Vagrant/ckan\n')
-    get_open_windows_function.side_effect = get_open_windows
+    # FIXME: This isn't perfect: non-ASCII characters have been removed
+    # from the mock output.
+    # This returns three Gnome Terminal windows, and some other windows.
+    get_open_windows_function.return_value = (
+        '0x02c000b3  0 4346   Navigator.Firefox     mistakenot The Mock '
+        'Class - Mock 1.0.1 documentation - Vimperator\n'
+        '0x03e0000c  0 4464   gnome-terminal.Gnome-terminal  mistakenot '
+        'tmux  /home/vagrant\n'
+        '0x042000b3  0 4904   Mail.Thunderbird      mistakenot Inbox - '
+        'Unified Folders - Mozilla Thunderbird\n'
+        '0x03e005d4  0 4464   gnome-terminal.Gnome-terminal  mistakenot '
+        'fish  /home/seanh/Projects/runraisenext\n'
+        '0x03e03281  0 4464   gnome-terminal.Gnome-terminal  mistakenot '
+        'wmctrl  /home/seanh/Vagrant/ckan\n')
 
     # Make the first Gnome Terminal window the currently focused one.
     get_current_window_function.return_value = ('envir_utf8: 1\n'
