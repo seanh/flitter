@@ -1,0 +1,43 @@
+{
+    "Terminal": {
+        "wm_class": ".Gnome-terminal",
+        "command": "gnome-terminal"
+    },
+    "Firefox": {
+        "wm_class": ".Firefox",
+        "command": "firefox"
+    },
+    "Thunderbird": {
+        "wm_class": ".Thunderbird",
+        "command": "thunderbird"
+    },
+    "gVim": {
+        "wm_class": ".Gvim",
+        "command": "gvim"
+    },
+    "Smuxi": {
+        "wm_class": ".Smuxi-frontend-gnome",
+        "command": "smuxi-frontend-gnome"
+    },
+    "Chrome": {
+        "wm_class": ".Google-chrome-stable",
+        "command": "google-chrome-stable"
+    },
+    "Hamster": {
+        "wm_class": "Time Tracker.Hamster",
+        "command": "hamster"
+    },
+    "Skype": {
+        "wm_class": "skype.Skype",
+        "command": "skype"
+    },
+    "Nautilus": {
+        "wm_class": "nautilus.Nautilus",
+        "command": "nautilus"
+    },
+    "Calendar": {
+        "wm_class": ".GoogleCalendargooglecom",
+        "command": "unity-webapps-runner -n 'R29vZ2xlQ2FsZW5kYXI=' -d 'google.com' --store-session-cookies"
+    }
+}
+
