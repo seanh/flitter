@@ -3,176 +3,251 @@
 import mock
 
 import runraisenext
+import wmctrl
 
 
-@mock.patch('runraisenext.run_command')
-@mock.patch('runraisenext.get_open_windows_from_wmctrl')
-def test_launching_apps(get_open_windows_function, run_command_function):
-    """runraisenext <app> should launch the app if it isn't running.
+def test_window_matches_when_matching():
+    """matches() should return True when given a matching window spec."""
 
-    If there are no windows that match the given window spec, it should run
-    the window spec's command.
+    specs = [
+        dict(window_id="window_id"),
+        dict(desktop="desktop"),
+        dict(pid="pid"),
+        dict(wm_class="Firefox"),
+        dict(wm_class=".Firefox"),
+        dict(wm_class="Navigator"),
+        dict(wm_class="Navigator.Firefox"),
+        dict(machine="machine"),
+        dict(title="title"),
+        dict(window_id='window_id', desktop='desktop', pid='pid',
+             wm_class='.Firefox', machine='machine', title='title'),
+        ]
+    window = wmctrl.Window('window_id', 'desktop', 'pid', 'Navigator.Firefox',
+                           'machine', 'title')
+
+    for spec in specs:
+        assert runraisenext.matches(window, spec)
+
+
+def test_window_matches_when_not_matching():
+    """matches() should return False when given a non-matching window spec."""
+
+    specs = [
+        dict(window_id="different_window_id"),
+        dict(desktop="different_desktop"),
+        dict(pid="different_pid"),
+        dict(wm_class="Chrome"),
+        dict(wm_class=".Chrome"),
+        dict(machine="different_machine"),
+        dict(title="different_title"),
+        dict(window_id='different_window_id', desktop='different_desktop',
+             pid='different_pid', wm_class='.Chrome',
+             machine='different_machine', title='different_title'),
+        dict(window_id='window_id', desktop='desktop', pid='pid',
+             wm_class='.Chrome', machine='machine', title='title'),
+        dict(window_id='different_window_id', desktop='desktop', pid='pid',
+             wm_class='.Firefox', machine='machine', title='title'),
+        ]
+    window = wmctrl.Window('window_id', 'desktop', 'pid', 'Navigator.Firefox',
+                           'machine', 'title')
+
+    for spec in specs:
+        assert not runraisenext.matches(window, spec)
+
+
+def test_window_matches_with_command():
+    """matches() should ignore "command" keys in window spec dicts.
+
+    Window objects don't have a .command attribute, but a window spec dict with
+    a "command" key should still match as long as its other keys match.
 
     """
-    get_open_windows_function.return_value = (
-        '0x03e0000c  0 4464   gnome-terminal.Gnome-terminal  mistakenot '
-        'tmux  /home/vagrant\n'
-        '0x042000b3  0 4904   Mail.Thunderbird      mistakenot Inbox - '
-        'Unified Folders - Mozilla Thunderbird\n')
+    spec = dict(window_id='window_id', desktop='desktop', pid='pid',
+                wm_class='.Firefox', machine='machine', title='title',
+                command='firefox')
+    window = wmctrl.Window('window_id', 'desktop', 'pid', 'Navigator.Firefox',
+                           'machine', 'title')
+    assert runraisenext.matches(window, spec)
 
-    # Test it with a few different apps from the config file, for good measure.
-    apps = [
-        {'name': 'firefox', 'command': 'firefox'},
-        {'name': 'skype', 'command': 'skype'},
-        {'name': 'gvim', 'command': 'gvim'},
+
+def test_window_matches_is_case_insensitive():
+    """matched() should match against window spec items case-insensitively."""
+    spec = dict(window_id='WINDOW_ID', desktop='DESKTOP', pid='PID',
+                wm_class='.FIREFOX', machine='MACHINE', title='TITLE',
+                command='firefox')
+    window = wmctrl.Window('window_id', 'desktop', 'pid', 'Navigator.Firefox',
+                           'machine', 'title')
+    assert runraisenext.matches(window, spec)
+
+
+def test_with_command_only():
+    """runraisenext -c firefox should run the firefox` command.
+
+    If just a command is given and no window spec or alias, it should just run
+    that command.
+
+    """
+    run_function = mock.MagicMock()
+    focused_window = wmctrl.Window('2', '0', 'pid', 'Navigator.Thunderbird',
+                                   'mistakenot', 'My Thunderbird Window')
+    windows = [
+        wmctrl.Window('1', '0', 'pid', 'Navigator.Firefox', 'mistakenot',
+                      'My Firefox Window'),
+        focused_window,
+        wmctrl.Window('1', '0', 'pid', 'Terminal.Terminal', 'mistakenot',
+                      'My Terminal Window'),
     ]
-    for app in apps:
-        runraisenext.main([app['name'], '-f', 'runraisenext.json'])
-        run_command_function.assert_called_once_with(app['command'])
-        run_command_function.reset_mock()
+    focus_window_function = mock.MagicMock()
+    loop_function = mock.MagicMock()
+
+    runraisenext.runraisenext({'command': 'firefox'}, run_function, windows,
+                              focused_window, focus_window_function,
+                              loop_function)
+
+    run_function.assert_called_once_with('firefox')
+    assert not focus_window_function.called
+    assert not loop_function.called
 
 
-@mock.patch('runraisenext.focus_window_with_wmctrl')
-@mock.patch('runraisenext.get_open_windows_from_wmctrl')
-@mock.patch('runraisenext.get_current_window_from_wmctrl')
-def test_focusing_apps(get_current_window_function, get_open_windows_function,
-                       focus_window_function):
-    """runraisenext <app> should focus the app if it's running but not focused.
+def test_with_no_open_windows():
+    """runraisenext firefox should run `firefox` if there are no open windows.
 
-    If there is one window that matches the given window spec and that window
-    is not focused, it should focus that window.
-
-    """
-    # FIXME: This isn't perfect: non-ASCII characters have been removed
-    # from the mock output.
-    get_open_windows_function.return_value = (
-        '0x02c000b3  0 4346   Navigator.Firefox     mistakenot The Mock '
-        'Class - Mock 1.0.1 documentation - Vimperator\n'
-        '0x03e0000c  0 4464   gnome-terminal.Gnome-terminal  mistakenot '
-        'tmux  /home/vagrant\n'
-        '0x05600003  0 12022  gvim.Gvim             mistakenot '
-        'test_runraisenext.py (~/Projects/runraisenext) - GVIM1\n'
-        '0x0580002b  0 15150  skype.Skype           mistakenot foobar - '
-        'Skype\n')
-
-    # Make the Firefox window the currently focused one.
-    get_current_window_function.return_value = ('envir_utf8: 1\n'
-                                                'Using window: 0x02c000b3\n')
-
-    # Since Firefox is the open window, runraisenext skype or gvim should
-    # raise Skype or gVim.
-    runraisenext.main(['skype', '-f', 'runraisenext.json'])
-    focus_window_function.assert_called_once_with('0x0580002b')
-    focus_window_function.reset_mock()
-
-    runraisenext.main(['gvim', '-f', 'runraisenext.json'])
-    focus_window_function.assert_called_once_with('0x05600003')
-    focus_window_function.reset_mock()
-
-
-@mock.patch('runraisenext.run_command')
-@mock.patch('runraisenext.focus_window_with_wmctrl')
-@mock.patch('runraisenext.get_open_windows_from_wmctrl')
-@mock.patch('runraisenext.get_current_window_from_wmctrl')
-def test_app_focused(get_current_window_function, get_open_windows_function,
-                     focus_window_function, run_command_function):
-    """It should do nothing if the app's only window is already focused.
-
-    If there is one window that matches the given window spec and that window
-    is already focused, it should do nothing.
+    If there are no open windows it should just run the command associated with
+    the given window spec.
 
     """
-    # FIXME: This isn't perfect: non-ASCII characters have been removed
-    # from the mock output.
-    get_open_windows_function.return_value = (
-        '0x02c000b3  0 4346   Navigator.Firefox     mistakenot The Mock '
-        'Class - Mock 1.0.1 documentation - Vimperator\n'
-        '0x03e0000c  0 4464   gnome-terminal.Gnome-terminal  mistakenot '
-        'tmux  /home/vagrant\n'
-        '0x05600003  0 12022  gvim.Gvim             mistakenot '
-        'test_runraisenext.py (~/Projects/runraisenext) - GVIM1\n'
-        '0x0580002b  0 15150  skype.Skype           mistakenot foobar - '
-        'Skype\n')
+    run_function = mock.MagicMock()
+    focus_window_function = mock.MagicMock()
+    loop_function = mock.MagicMock()
 
-    # Make the Firefox window the currently focused one.
-    get_current_window_function.return_value = ('envir_utf8: 1\n'
-                                                'Using window: 0x02c000b3\n')
+    runraisenext.runraisenext({'command': 'firefox'}, run_function, [], None,
+                              focus_window_function, loop_function)
 
-    # Since Firefox is the open window, runraisenext sfirefox should do
-    # nothing.
-    runraisenext.main(['firefox', '-f', 'runraisenext.json'])
-    focus_window_function.assert_not_called()
-    run_command_function.assert_not_called()
+    run_function.assert_called_once_with('firefox')
+    assert not focus_window_function.called
+    assert not loop_function.called
 
 
-@mock.patch('runraisenext.run_command')
-@mock.patch('runraisenext.focus_window_with_wmctrl')
-@mock.patch('runraisenext.get_open_windows_from_wmctrl')
-@mock.patch('runraisenext.get_current_window_from_wmctrl')
-def test_looping(get_current_window_function, get_open_windows_function,
-                 focus_window_function, run_command_function):
-    """runraisenext <app> should loop through all of the app's windows.
+def test_with_no_matching_windows():
+    """runraisenext firefox should run `firefox` if there are no firefox windows
+    open.
 
-    If there is more than one window that matches the given window spec,
-    and one of the matching windows is the currently focused window,
-    then it should loop through each of the matching windows.
+    If there are no open windows that match the given window spec, it should
+    run the window spec's command.
 
     """
-    # FIXME: This isn't perfect: non-ASCII characters have been removed
-    # from the mock output.
-    # This returns three Gnome Terminal windows, and some other windows.
-    get_open_windows_function.return_value = (
-        '0x02c000b3  0 4346   Navigator.Firefox     mistakenot The Mock '
-        'Class - Mock 1.0.1 documentation - Vimperator\n'
-        '0x03e0000c  0 4464   gnome-terminal.Gnome-terminal  mistakenot '
-        'tmux  /home/vagrant\n'
-        '0x042000b3  0 4904   Mail.Thunderbird      mistakenot Inbox - '
-        'Unified Folders - Mozilla Thunderbird\n'
-        '0x03e005d4  0 4464   gnome-terminal.Gnome-terminal  mistakenot '
-        'fish  /home/seanh/Projects/runraisenext\n'
-        '0x03e03281  0 4464   gnome-terminal.Gnome-terminal  mistakenot '
-        'wmctrl  /home/seanh/Vagrant/ckan\n')
+    window_spec = {"command": "firefox", "wm_class": ".Firefox"}
+    run_function = mock.MagicMock()
+    focused_window = wmctrl.Window('2', '0', 'pid', 'Navigator.Thunderbird',
+                                   'mistakenot', 'My Thunderbird Window')
+    windows = [
+        wmctrl.Window('1', '0', 'pid', 'Navigator.Gvim', 'mistakenot',
+                      'My GVim Window'),
+        focused_window,
+        wmctrl.Window('1', '0', 'pid', 'Terminal.Terminal', 'mistakenot',
+                      'My Terminal Window'),
+    ]
+    focus_window_function = mock.MagicMock()
+    loop_function = mock.MagicMock()
 
-    # Make the first Gnome Terminal window the currently focused one.
-    get_current_window_function.return_value = ('envir_utf8: 1\n'
-                                                'Using window: 0x03e0000c\n')
+    runraisenext.runraisenext(window_spec, run_function, windows,
+                              focused_window, focus_window_function,
+                              loop_function)
 
-    # Since there are 3 Gnome Terminal windows, and the first Gnome Terminal
-    # window is the currently focused window, runraisenext terminal should
-    # focus the second Gnome Terminal window.
-    runraisenext.main(['terminal', '-f', 'runraisenext.json'])
-    focus_window_function.assert_called_once_with('0x03e005d4')
-    focus_window_function.reset_mock()
-    run_command_function.assert_not_called()
-
-    # Make the second Gnome Terminal window the currently focused one.
-    get_current_window_function.return_value = ('envir_utf8: 1\n'
-                                                'Using window: 0x03e005d4\n')
-
-    # Now runraisenext terminal should focus the third Gnome Terminal window.
-    runraisenext.main(['terminal', '-f', 'runraisenext.json'])
-    focus_window_function.assert_called_once_with('0x03e03281')
-    focus_window_function.reset_mock()
-    run_command_function.assert_not_called()
-
-    # Make the third Gnome Terminal window the currently focused one.
-    get_current_window_function.return_value = ('envir_utf8: 1\n'
-                                                'Using window: 0x03e03281\n')
-
-    # Now runraisenext terminal should focus the first Gnome Terminal window.
-    runraisenext.main(['terminal', '-f', 'runraisenext.json'])
-    focus_window_function.assert_called_once_with('0x03e0000c')
-    run_command_function.assert_not_called()
+    run_function.assert_called_once_with('firefox')
+    assert not focus_window_function.called
+    assert not loop_function.called
 
 
-def test_get_open_windows():
-    """Test the parsing of wmctrl -lxp's window list.
+def test_raise():
+    """If there's a Firefox window open but it's not focused, runraisenext
+    firefox should focus the Firefox window."""
+    window_spec = {"command": "firefox", "wm_class": ".Firefox"}
+    run_function = mock.MagicMock()
+    focused_window = wmctrl.Window('2', '0', 'pid', 'Navigator.Thunderbird',
+                                   'mistakenot', 'My Thunderbird Window')
+    firefox_window = wmctrl.Window('2', '0', 'pid', 'Navigator.Firefox',
+                                   'mistakenot', 'My Firefox Window')
+    windows = [
+        firefox_window,
+        focused_window,
+        wmctrl.Window('1', '0', 'pid', 'Terminal.Terminal', 'mistakenot',
+                      'My Terminal Window'),
+    ]
+    focus_window_function = mock.MagicMock()
+    loop_function = mock.MagicMock()
 
-    Test for correct parsing of a real window list from wmctrl -lxp, including
-    junk windows from Unity, the Nautilus desktop window, Conky,
-    non-ASCII characters in window titles, and WM_CLASS's with spaces in them.
+    runraisenext.runraisenext(window_spec, run_function, windows,
+                              focused_window, focus_window_function,
+                              loop_function)
+
+    assert not run_function.called
+    assert focus_window_function.called_once_with(firefox_window)
+    assert not loop_function.called
+
+
+def test_already_raised():
+    """If there's one Firefox window open and it's already focused,
+    runraisenext firefox should do nothing."""
+    window_spec = {"command": "firefox", "wm_class": ".Firefox"}
+    run_function = mock.MagicMock()
+    firefox_window = wmctrl.Window('2', '0', 'pid', 'Navigator.Firefox',
+                                   'mistakenot', 'My Firefox Window')
+    windows = [
+        firefox_window,
+        wmctrl.Window('2', '0', 'pid', 'Navigator.Thunderbird', 'mistakenot',
+                      'My Thunderbird Window'),
+        wmctrl.Window('1', '0', 'pid', 'Terminal.Terminal', 'mistakenot',
+                      'My Terminal Window'),
+    ]
+    focus_window_function = mock.MagicMock()
+    loop_function = mock.MagicMock()
+
+    runraisenext.runraisenext(window_spec, run_function, windows,
+                              firefox_window, focus_window_function,
+                              loop_function)
+
+    assert not run_function.called
+    assert not focus_window_function.called
+    assert not loop_function.called
+
+
+def test_main_calls_loop():
+    """If there are multiple Firefox windows open and one of them is focused,
+    runraisenext firefox should focus the next Firefox windows.
+
+    Repeated calls should loop through all the Firefox windows, going back to
+    the first one after the last one.
 
     """
-    window_list = open('example_wmctrl_window_list.txt', 'r').read()
-    windows = runraisenext.get_open_windows(window_list)
-    assert len(windows) == 17
+    window_spec = {"command": "firefox", "wm_class": ".Firefox"}
+    run_function = mock.MagicMock()
+    firefox_window_1 = wmctrl.Window('2', '0', 'pid', 'Navigator.Firefox',
+                                     'mistakenot', 'My Firefox Window')
+    firefox_window_2 = wmctrl.Window('3', '0', 'pid', 'Navigator.Firefox',
+                                     'mistakenot', 'My Other Firefox Window')
+    windows = [
+        firefox_window_1,
+        firefox_window_2,
+        wmctrl.Window('4', '0', 'pid', 'Navigator.Thunderbird', 'mistakenot',
+                      'My Thunderbird Window'),
+        wmctrl.Window('5', '0', 'pid', 'Terminal.Terminal', 'mistakenot',
+                      'My Terminal Window'),
+    ]
+    focus_window_function = mock.MagicMock()
+
+    runraisenext.runraisenext(window_spec, run_function, windows,
+                              firefox_window_1, focus_window_function,
+                              runraisenext.loop)
+
+    assert not run_function.called
+    assert focus_window_function.called_once_with(firefox_window_2)
+
+
+def test_most_recently_raised_first():
+    """When raising an app, the app's most recently focused window should be
+    focused first."""
+    raise NotImplementedError
+
+
+# TODO: Tests for all the command-line options.

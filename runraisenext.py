@@ -2,12 +2,11 @@
 """A script for launching apps and switching windows.
 
 FIXME: Don't crash if the config file doesn't exist
-FIXME: Something is going wrong when there are no open windows on the current
-       desktop
 TODO: Add a -c, --current option to cycle through all open windows of the
       current app (using the WM_CLASS of the current window)
+TODO: Add a -o, --others option to cycle through all "other" windows
+      (windows not matching any spec defined in the config file)
 TODO: Package it up, make it pip installable and with a default config file
-TODO: Factor out the wmctrl stuff into a lib.
 
 """
 import sys
@@ -16,173 +15,37 @@ import subprocess
 import json
 import os
 
-
-def focus_window_with_wmctrl(window_id):
-    """Focus the window with the given ID."""
-    subprocess.call(["wmctrl", "-i", "-a", window_id])
+import wmctrl
 
 
-def run_command(command):
+def run(command):
     """Run the given shell command as a subprocess."""
     subprocess.call(command, shell=True)
 
 
-def run_window_spec_command(window_spec):
-    """Run the command from the given window spec, if it has one."""
+def run_window_spec_command(window_spec, run_function):
+    """Run the command from the given window spec, if it has one.
+
+    :param window_spec: the window spec whose command to run
+    :type window_spec: dict
+
+    :param run_function: the function to call to run the command
+    :type run_function: callable
+
+    """
     command = window_spec.get('command')
     if command:
-        run_command(command)
+        run_function(command)
 
 
-class Window(object):
+def focus_window(window):
+    """Focus the given window.
 
-    """A simple class to represent an open window."""
-
-    def __init__(self, line):
-        """Initialise a new Window object.
-
-        :param line: a line representing a window from the output of
-                     wmctrl -lxp
-        :type line: string
-
-        """
-        self.line = line
-        self.window_id, self.desktop, self.pid, rest = line.split(None, 3)
-        self.wm_class, rest = rest.split('  ', 1)
-        parts = rest.split(None, 1)
-        assert len(parts) in (1, 2)
-        self.machine = parts[0]
-        if len(parts) == 2:
-            self.title = parts[1]
-        else:
-            self.title = ''
-
-    def __eq__(self, other):
-
-        if not hasattr(other, "window_id"):
-            return False
-
-        return self.window_id == other.window_id
-
-    def __repr__(self):
-        return self.line
-
-    def matches(self, spec):
-        """Return True if this window matches the given window spec.
-
-        False otherwise.
-
-        :param spec: a window spec dictionary containing 0 or more of the keys:
-                     "window_id", "desktop", "pid", "wm_class", "machine",
-                     "title", all of the values should be strings
-        :type spec: dictionary
-
-        """
-        for key in spec.keys():
-            if key == 'command':
-                continue
-            if spec[key].lower() not in getattr(self, key, '').lower():
-                return False
-        return True
-
-    def focus(self):
-        """Focus this window.
-
-        """
-        focus_window_with_wmctrl(self.window_id)
-
-
-def get_open_windows_from_wmctrl():
-    """Return the list of currently open windows from wmctrl.
-
-    The list is returned as an unparsed string.
-
-    :raises: subprocess.CalledProcessError if wmctrl exits with non-zero status
+    :param window: the window to focus
+    :type window: wmctrl.Window
 
     """
-    return subprocess.check_output(["wmctrl", "-lxp"])
-
-
-def get_open_windows(window_list):
-    """Return a list of Window objects for all currently open windows.
-
-    :param window_list: The list of currently open windows from wmctrl as an
-        unparsed string of wmctrl -lxp output.
-
-    """
-    # FIXME: We assume utf8 here, which is probably bad.
-    lines = [line.decode("utf8") for line in window_list.split("\n")]
-
-    windows = []
-    for line in lines:
-        if not line:
-            continue
-        windows.append(Window(line))
-
-    # Remove Nautilus's desktop window.
-    # TODO: Make this a configurable list of excludes.
-    windows = [window for window in windows
-               if not window.matches({"wm_class": "desktop_window.Nautilus"})]
-
-    return windows
-
-
-def get_matching_windows(open_windows, window_spec):
-    """Return the list of windows from open_windows that match window_spec."""
-    matching_windows = [window for window in open_windows
-                        if window.matches(window_spec)]
-    return matching_windows
-
-
-def get_current_window_from_wmctrl():
-    """Return the currently focused window from wmctrl.
-
-    Returns the unparsed string from wmctrl, which contains the ID of the
-    current window as well as some other info.
-
-    :raises: subprocess.CalledProcessError if wmctrl exits with non-zero
-        status.
-
-    """
-    # wmctrl doesn't provide a good way to get the currently focused window,
-    # but this works.
-    return subprocess.check_output(["wmctrl", "-a", ":ACTIVE:", "-v"],
-                                   stderr=subprocess.STDOUT)
-
-
-def get_current_window(open_windows):
-    """Return the currently focused window.
-
-    :rtype: Window object
-
-    """
-    output = get_current_window_from_wmctrl()
-
-    # FIXME: We assume utf8 here, which is probably bad.
-    lines = [line.decode("utf8") for line in output.split("\n")]
-
-    assert len(lines) == 3
-    window_id = lines[1].split()[-1]
-    matching_windows = [window for window in open_windows
-                        if window.window_id == window_id]
-    assert len(matching_windows) == 1
-    current_window = matching_windows[0]
-    return current_window
-
-
-def loop(matching_windows, current_window):
-
-    assert current_window in matching_windows
-    assert len(matching_windows) > 1
-
-    # Find the next window after current_window in matching_windows
-    # and focus it, looping back to the start of matching_windows if necessary.
-    index = matching_windows.index(current_window) + 1
-    if index >= len(matching_windows):
-        index = 0
-    window_to_focus = matching_windows[index]
-    assert window_to_focus != current_window
-    window_to_focus.focus()
+    window.focus()
 
 
 def get_window_spec_from_file(alias, file_):
@@ -201,8 +64,145 @@ def get_window_spec_from_file(alias, file_):
     return spec
 
 
-def main(args):
-    """Parse the command-line arguments and kick off the necessary actions."""
+def loop(matching_windows, current_window, focus_window_function):
+    """Focus the next window after current_window in matching_windows.
+
+    If current_window is the last window in matching_windows, focus the first
+    window in matching_windows.
+
+    :param matching_windows: the list of windows matching the requested
+        window spec
+    :type matching_windows: list of wmctrl.Window objects
+
+    :param current_window: the currently focused window, must be one of the
+        windows from matching_windows
+    :type current_window: wmctrl.Window
+
+    :param focus_window_function: the function to call to focus a window
+    :type focus_window_function: callable
+
+    """
+    assert current_window in matching_windows
+    assert len(matching_windows) > 1
+
+    # Find the next window after current_window in matching_windows
+    # and focus it, looping back to the start of matching_windows if necessary.
+    index = matching_windows.index(current_window) + 1
+    if index >= len(matching_windows):
+        index = 0
+    window_to_focus = matching_windows[index]
+    assert window_to_focus != current_window
+    focus_window_function(window_to_focus)
+
+
+def matches(window, window_spec):
+    """Return True if the given window matches the given window spec.
+
+    False otherwise.
+
+    A window spec is a dict containing items that will be matched against
+    the window object's attributes, for example:
+
+        {'window_id': '0x02a00001',
+         'desktop': '0',
+         'pid': '4346',
+         'wm_class': '.Firefox',
+         'machine': 'mistakenot',
+         'title': 'The Mock Class - Mock 1.0.1 documentation - Firefox'}
+
+    A window object matches a spec if it has an attribute matching each of
+    the items in the spec.
+
+    A spec doesn't have to contain all of the attributes. For example
+    {'wm_class': '.Firefox'} will match all windows with a wm_class
+    attribute matching ".Firefox".
+
+    Attribute matching is done by looking for substrings. For example a
+    wm_class of ".Firefox" will match a window with a wm_class of
+    "Navigator.Firefox".
+
+    Window specs can also contain a "command" key (the command to be run to
+    launch the app if it doesn't have any open windows) - this key will be
+    ignored and the window will match the spec as long as all the other keys
+    match.
+
+    """
+    for key in window_spec.keys():
+        if key == 'command':
+            continue
+        if window_spec[key].lower() not in getattr(window, key, '').lower():
+            return False
+    return True
+
+
+def runraisenext(window_spec, run_function, open_windows, focused_window,
+                 focus_window_function, loop_function):
+    """Either run the app, raise the app, or go to the app's next window.
+
+    Depending on whether the app has any windows open and whether the app is
+    currently focused.
+
+    :param window_spec: the window spec to match against open windows
+    :type window_spec: dict
+
+    :param run_function: the function to use to run window spec commands
+    :type run_function: callable taking one argument: the window spec
+
+    :param open_windows: the list of open windows
+    :type open_windows: list of Window objects
+
+    :param focused_window: the currently focused window, should be one of the
+        Window objects from open_windows
+    :type focused_window: Window
+
+    :param focus_window_function: the function to call to focus a window
+    :type focus_window_function: callable taking one argument: a Window object
+        representing the window to be focused
+
+    :param loop_function: the function to call to loop (focus the next matching
+        window)
+    :type loop_function: callable
+
+    """
+    # If no window spec options were given, just run the command
+    # (if there is one).
+    if ('id' not in window_spec and
+            'desktop' not in window_spec and
+            'pid' not in window_spec and
+            'wm_class' not in window_spec and
+            'machine' not in window_spec and
+            'title' not in window_spec):
+        run_window_spec_command(window_spec, run_function)
+        return
+
+    # If there are no open windows, just run the command (if there is one).
+    if not open_windows:
+        run_window_spec_command(window_spec, run_function)
+        return
+
+    matching_windows = [window for window in open_windows
+                        if matches(window, window_spec)]
+
+    if not matching_windows:
+        # The requested app is not open, launch it.
+        run_window_spec_command(window_spec, run_function)
+        return
+
+    if focused_window not in matching_windows:
+        # The app is open but is not focused, focus it.
+        focus_window_function(matching_windows[0])
+    elif len(matching_windows) == 1:
+        # The app has one window open and it's already focused, do nothing.
+        pass
+    else:
+        # The app has multiple windows open, and one of them is already
+        # focused, focus the next matching window.
+        loop_function(matching_windows, focused_window, focus_window_function)
+
+
+def parse_command_line_arguments(args):
+    """Parse the command-line arguments and return the requested window spec."""
+
     parser = argparse.ArgumentParser(
         description="a script for launching apps and switching windows",
         add_help=True)
@@ -237,20 +237,10 @@ def main(args):
         "matching windows")
 
     parser.add_argument(
-        "-a", "--all", action="store_true",
-        help="cycle through all open windows, instead of matching windows")
-
-    parser.add_argument(
         "-f", "--file", help="Use a custom config file path",
         default="~/.runraisenext.json")
 
     args = parser.parse_args(args)
-
-    if args.all:
-        open_windows = get_open_windows(get_open_windows_from_wmctrl())
-        current_window = get_current_window(open_windows)
-        loop(open_windows, current_window)
-        return
 
     if args.window_id is not None:
         if (args.desktop or args.pid or args.wm_class or args.machine
@@ -280,43 +270,13 @@ def main(args):
     if args.command is not None:
         window_spec['command'] = args.command
 
-    # If no window spec options were given, just run the command
-    # (if there is one).
-    if ('id' not in window_spec and
-            'desktop' not in window_spec and
-            'pid' not in window_spec and
-            'wm_class' not in window_spec and
-            'machine' not in window_spec and
-            'title' not in window_spec):
-        run_window_spec_command(window_spec)
-        return
+    return window_spec
 
-    open_windows = get_open_windows(get_open_windows_from_wmctrl())
 
-    # If there are no open windows, just run the command (if there is one).
-    if not open_windows:
-        run_window_spec_command(window_spec)
-        return
-
-    matching_windows = get_matching_windows(open_windows, window_spec)
-
-    if not matching_windows:
-        # The requested app is not open, launch it.
-        run_window_spec_command(window_spec)
-        return
-
-    current_window = get_current_window(open_windows)
-
-    if current_window not in matching_windows:
-        # The app is open but is not focused, focus it.
-        matching_windows[0].focus()
-    elif len(matching_windows) == 1:
-        # The app has one window open and it's already focused, do nothing.
-        pass
-    else:
-        # The app has multiple windows open, and one of them is already
-        # focused, focus the next matching window.
-        loop(matching_windows, current_window)
+def main(args):
+    window_spec = parse_command_line_arguments(args)
+    return runraisenext(window_spec, run, wmctrl.windows(),
+                        wmctrl.focused_window(), focus_window, loop)
 
 
 if __name__ == "__main__":
