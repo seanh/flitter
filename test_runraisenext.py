@@ -98,15 +98,12 @@ def test_with_command_only():
                       'My Terminal Window'),
     ]
     focus_window_function = mock.MagicMock()
-    loop_function = mock.MagicMock()
 
     runraisenext.runraisenext({'command': 'firefox'}, run_function, windows,
-                              focused_window, focus_window_function,
-                              loop_function)
+                              focused_window, focus_window_function)
 
     run_function.assert_called_once_with('firefox')
     assert not focus_window_function.called
-    assert not loop_function.called
 
 
 def test_with_no_open_windows():
@@ -118,14 +115,12 @@ def test_with_no_open_windows():
     """
     run_function = mock.MagicMock()
     focus_window_function = mock.MagicMock()
-    loop_function = mock.MagicMock()
 
     runraisenext.runraisenext({'command': 'firefox'}, run_function, [], None,
-                              focus_window_function, loop_function)
+                              focus_window_function)
 
     run_function.assert_called_once_with('firefox')
     assert not focus_window_function.called
-    assert not loop_function.called
 
 
 def test_with_no_matching_windows():
@@ -148,15 +143,12 @@ def test_with_no_matching_windows():
                       'My Terminal Window'),
     ]
     focus_window_function = mock.MagicMock()
-    loop_function = mock.MagicMock()
 
     runraisenext.runraisenext(window_spec, run_function, windows,
-                              focused_window, focus_window_function,
-                              loop_function)
+                              focused_window, focus_window_function)
 
     run_function.assert_called_once_with('firefox')
     assert not focus_window_function.called
-    assert not loop_function.called
 
 
 def test_raise():
@@ -175,15 +167,12 @@ def test_raise():
                       'My Terminal Window'),
     ]
     focus_window_function = mock.MagicMock()
-    loop_function = mock.MagicMock()
 
     runraisenext.runraisenext(window_spec, run_function, windows,
-                              focused_window, focus_window_function,
-                              loop_function)
+                              focused_window, focus_window_function)
 
     assert not run_function.called
     assert focus_window_function.called_once_with(firefox_window)
-    assert not loop_function.called
 
 
 def test_already_raised():
@@ -201,15 +190,12 @@ def test_already_raised():
                       'My Terminal Window'),
     ]
     focus_window_function = mock.MagicMock()
-    loop_function = mock.MagicMock()
 
     runraisenext.runraisenext(window_spec, run_function, windows,
-                              firefox_window, focus_window_function,
-                              loop_function)
+                              firefox_window, focus_window_function)
 
     assert not run_function.called
     assert not focus_window_function.called
-    assert not loop_function.called
 
 
 def test_main_calls_loop():
@@ -237,8 +223,7 @@ def test_main_calls_loop():
     focus_window_function = mock.MagicMock()
 
     runraisenext.runraisenext(window_spec, run_function, windows,
-                              firefox_window_1, focus_window_function,
-                              runraisenext.loop)
+                              firefox_window_1, focus_window_function)
 
     assert not run_function.called
     assert focus_window_function.called_once_with(firefox_window_2)

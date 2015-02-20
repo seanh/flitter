@@ -105,39 +105,6 @@ def update_pickled_window_list(open_windows, newly_focused_window):
         pickle.dump(open_windows, file_)
 
 
-def loop(matching_windows, current_window, focus_window_function,
-         open_windows):
-    """Focus the next window after current_window in matching_windows.
-
-    If current_window is the last window in matching_windows, focus the first
-    window in matching_windows.
-
-    :param matching_windows: the list of windows matching the requested
-        window spec
-    :type matching_windows: list of wmctrl.Window objects
-
-    :param current_window: the currently focused window, must be one of the
-        windows from matching_windows
-    :type current_window: wmctrl.Window
-
-    :param focus_window_function: the function to call to focus a window
-    :type focus_window_function: callable
-
-    """
-    assert current_window in matching_windows
-    assert len(matching_windows) > 1
-
-    # Find the next window after current_window in matching_windows
-    # and focus it, looping back to the start of matching_windows if necessary.
-    index = matching_windows.index(current_window) + 1
-    if index >= len(matching_windows):
-        index = 0
-    window_to_focus = matching_windows[index]
-    assert window_to_focus != current_window
-    focus_window_function(window_to_focus)
-    update_pickled_window_list(open_windows, window_to_focus)
-
-
 def matches(window, window_spec):
     """Return True if the given window matches the given window spec.
 
@@ -178,8 +145,31 @@ def matches(window, window_spec):
     return True
 
 
+def _unvisited_windows(matching_windows, open_windows):
+    """Return the list of matching windows that we haven't looped through yet.
+
+    When we're looping through the windows of an app there's a continuous
+    sequence of the app's windows at the top of the list of all open windows
+    (which is sorted in most-recently-focused order). These are the windows
+    from the app that we've already looped through.
+
+    This function returns the app's windows that aren't part of this list:
+    the ones we haven't looped through yet.
+
+    May return an empty list.
+
+    """
+    visited_windows = []
+    for window in open_windows:
+        if window in matching_windows:
+            visited_windows.append(window)
+        else:
+            break
+    return [w for w in matching_windows if w not in visited_windows]
+
+
 def runraisenext(window_spec, run_function, open_windows, focused_window,
-                 focus_window_function, loop_function):
+                 focus_window_function):
     """Either run the app, raise the app, or go to the app's next window.
 
     Depending on whether the app has any windows open and whether the app is
@@ -201,10 +191,6 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
     :param focus_window_function: the function to call to focus a window
     :type focus_window_function: callable taking one argument: a Window object
         representing the window to be focused
-
-    :param loop_function: the function to call to loop (focus the next matching
-        window)
-    :type loop_function: callable
 
     """
     # If no window spec options were given, just run the command
@@ -229,20 +215,24 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
     if not matching_windows:
         # The requested app is not open, launch it.
         run_window_spec_command(window_spec, run_function)
-        return
-
-    if focused_window not in matching_windows:
-        # The app is open but is not focused, focus it.
+    elif focused_window not in matching_windows:
+        # The requested app isn't focused. Focus its most recently used window.
         focus_window_function(matching_windows[0])
         update_pickled_window_list(open_windows, matching_windows[0])
-    elif len(matching_windows) == 1:
+    elif len(matching_windows) == 1 and focused_window in matching_windows:
         # The app has one window open and it's already focused, do nothing.
         pass
     else:
-        # The app has multiple windows open, and one of them is already
-        # focused, focus the next matching window.
-        loop_function(matching_windows, focused_window, focus_window_function,
-                      open_windows)
+        # The app has more than one window open, and one of the app's windows
+        # is focused. Loop to the app's next window.
+        assert focused_window in matching_windows and len(matching_windows) > 1
+        unvisited = _unvisited_windows(matching_windows, open_windows)
+        if unvisited:
+            focus_window_function(unvisited[0])
+            update_pickled_window_list(open_windows, unvisited[0])
+        else:
+            focus_window_function(matching_windows[-1])
+            update_pickled_window_list(open_windows, matching_windows[-1])
 
 
 def parse_command_line_arguments(args):
@@ -321,7 +311,7 @@ def parse_command_line_arguments(args):
 def main(args):
     window_spec = parse_command_line_arguments(args)
     return runraisenext(window_spec, run, windows(),
-                        wmctrl.focused_window(), focus_window, loop)
+                        wmctrl.focused_window(), focus_window)
 
 
 if __name__ == "__main__":
