@@ -2,8 +2,6 @@
 """A script for launching apps and switching windows.
 
 FIXME: Don't crash if the config file doesn't exist
-TODO: Add a -o, --others option to cycle through all "other" windows
-      (windows not matching any spec defined in the config file)
 TODO: Package it up, make it pip installable and with a default config file
 
 """
