@@ -1,7 +1,6 @@
 #!/usr/bin/env python2.7
 """A script for launching apps and switching windows.
 
-FIXME: Don't crash if the config file doesn't exist
 TODO: Package it up, make it pip installable and with a default config file
 
 """
