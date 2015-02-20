@@ -1,4 +1,5 @@
 """Tests for runraisenext.py."""
+import os
 
 import mock
 
@@ -251,3 +252,33 @@ def test_most_recently_raised_first():
 
 
 # TODO: Tests for all the command-line options.
+
+
+class TestChooseConfigFile(object):
+    """Unit tests for the choose_config_file() function."""
+
+    def test_with_existing_custom_config_file(self):
+        arg = "~/.my_custom_config_file"
+        expected_path = os.path.abspath(os.path.expanduser(arg))
+        assert runraisenext.choose_config_file(arg) == expected_path
+
+    def test_with_custom_config_file_that_does_not_exist(self):
+        pass
+
+    def test_custom_config_file_tilde_expansion(self):
+        pass
+
+    def test_custom_config_file_relative_path_expansion(self):
+        pass
+
+    def test_fall_back_on_home_dir(self):
+        pass
+
+    def test_config_file_in_home_dir_is_not_a_file(self):
+        pass
+
+    def test_fall_back_on_packaged(self):
+        pass
+
+    def test_fall_back_on_packaged_when_cwd_is_different(self):
+        pass

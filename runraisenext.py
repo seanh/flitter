@@ -49,8 +49,7 @@ def get_window_spec_from_file(alias, file_):
     :rtype: dictionary
 
     """
-    specs = json.loads(
-        open(os.path.abspath(os.path.expanduser(file_)), 'r').read())
+    specs = json.loads(open(file_, 'r').read())
     lowercased_specs = {}
     for key in specs:
         assert key.lower() not in lowercased_specs
@@ -195,6 +194,44 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
         loop_function(matching_windows, focused_window, focus_window_function)
 
 
+class ConfigFileError(Exception):
+    pass
+
+
+def choose_config_file(config_file_arg):
+    """Return the config file to use based on the command-line argument.
+
+    Returns the absolute path to the file, expanding ~ and relative paths.
+
+    If no config file is specified on the command-line, falls back on
+    ~/.runraisenext.json. If that doesn't exist, falls back on the
+    runraisenext.json file that ships with the package.
+
+    :param config_file_arg: the config file that the user gave as a command
+        line argument, or None
+    :type config_file_arg: unicode or None
+
+    :raises ConfigFileError: if the chosen config file doesn't exist or isn't
+        a file
+
+    """
+    if config_file_arg is None:
+        path = os.path.abspath(os.path.expanduser("~/.runraisenext.json"))
+        if os.path.isfile(path):
+            return path
+        else:
+            config_file = os.path.abspath("runraisenext.json")
+    else:
+        config_file = os.path.abspath(os.path.expanduser(config_file_arg))
+
+    if not os.path.isfile(config_file):
+        raise ConfigFileError(
+            "Config file {c} doesn't exist or isn't a file".format(
+                c=config_file))
+
+    return config_file
+
+
 def parse_command_line_arguments(args):
     """Parse the command-line arguments and return the requested window spec."""
 
@@ -232,10 +269,15 @@ def parse_command_line_arguments(args):
         "matching windows")
 
     parser.add_argument(
-        "-f", "--file", help="Use a custom config file path",
-        default="~/.runraisenext.json")
+        "-f", "--file", help="Use a custom config file path", default=None,
+        dest="config_file")
 
     args = parser.parse_args(args)
+
+    try:
+        config_file = choose_config_file(args.config_file)
+    except ConfigFileError as err:
+        parser.exit(status=1, message=err.message)
 
     if args.window_id is not None:
         if (args.desktop or args.pid or args.wm_class or args.machine
@@ -247,7 +289,7 @@ def parse_command_line_arguments(args):
 
     # Form the window spec dict.
     if args.alias:
-        window_spec = get_window_spec_from_file(args.alias, args.file)
+        window_spec = get_window_spec_from_file(args.alias, config_file)
     else:
         window_spec = {}
     if args.window_id is not None:
