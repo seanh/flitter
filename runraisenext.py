@@ -5,6 +5,7 @@ import argparse
 import subprocess
 import json
 import os
+import pickle
 
 import wmctrl
 
@@ -55,7 +56,57 @@ def get_window_spec_from_file(alias, file_):
     return spec
 
 
-def loop(matching_windows, current_window, focus_window_function):
+def pickle_file():
+    """Return the path to the file we use to track windows in mru order."""
+    return os.path.abspath(os.path.expanduser("~/.runraisenext.pickle"))
+
+
+def windows():
+    """Return the list of open windows in most-recently-used order."""
+    with open(pickle_file(), "r") as file_:
+        try:
+            pickled_window_list = pickle.load(file_)
+        except IOError:
+            # This happens when the picke file doesn't exist yet, for example.
+            pickled_window_list = []
+    current_window_list = wmctrl.windows()
+
+    # Remove windows that have been closed since the last time we ran.
+    pickled_window_list = [
+        w for w in pickled_window_list if w in current_window_list]
+
+    # Add windows that have been opened since the last time we ran to the front
+    # of the list.
+    for window in current_window_list:
+        if window not in pickled_window_list:
+            pickled_window_list.insert(0, window)
+
+    return pickled_window_list
+
+
+def update_pickled_window_list(open_windows, newly_focused_window):
+    """Move the newly focused window to the top of the cached list of windows.
+
+    We keep a cached list of windows in most-recently-used order so that
+    when switching to a new app we can switch to the app's most recently used
+    windows first.
+
+    Each time after focusing a window we call this function to update the
+    cached list on disk for the next time we run.
+
+    """
+    assert newly_focused_window in open_windows
+    open_windows.remove(newly_focused_window)
+    assert newly_focused_window not in open_windows, (
+        "There shouldn't be more than one instance of the same window in "
+        "the list of open windows")
+    open_windows.insert(0, newly_focused_window)
+    with open(pickle_file(), "w") as file_:
+        pickle.dump(open_windows, file_)
+
+
+def loop(matching_windows, current_window, focus_window_function,
+         open_windows):
     """Focus the next window after current_window in matching_windows.
 
     If current_window is the last window in matching_windows, focus the first
@@ -84,6 +135,7 @@ def loop(matching_windows, current_window, focus_window_function):
     window_to_focus = matching_windows[index]
     assert window_to_focus != current_window
     focus_window_function(window_to_focus)
+    update_pickled_window_list(open_windows, window_to_focus)
 
 
 def matches(window, window_spec):
@@ -182,13 +234,15 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
     if focused_window not in matching_windows:
         # The app is open but is not focused, focus it.
         focus_window_function(matching_windows[0])
+        update_pickled_window_list(open_windows, matching_windows[0])
     elif len(matching_windows) == 1:
         # The app has one window open and it's already focused, do nothing.
         pass
     else:
         # The app has multiple windows open, and one of them is already
         # focused, focus the next matching window.
-        loop_function(matching_windows, focused_window, focus_window_function)
+        loop_function(matching_windows, focused_window, focus_window_function,
+                      open_windows)
 
 
 def parse_command_line_arguments(args):
@@ -266,7 +320,7 @@ def parse_command_line_arguments(args):
 
 def main(args):
     window_spec = parse_command_line_arguments(args)
-    return runraisenext(window_spec, run, wmctrl.windows(),
+    return runraisenext(window_spec, run, windows(),
                         wmctrl.focused_window(), focus_window, loop)
 
 
