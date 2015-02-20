@@ -1,9 +1,5 @@
 #!/usr/bin/env python2.7
-"""A script for launching apps and switching windows.
-
-TODO: Package it up, make it pip installable and with a default config file
-
-"""
+"""A script for launching apps and switching windows."""
 import sys
 import argparse
 import subprocess
