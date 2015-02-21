@@ -47,6 +47,11 @@ class Window(object):
             title = ''
         self.title = title
 
+    def __repr__(self):
+        return str(dict(
+            window_id=self.window_id, desktop=self.desktop, pid=self.pid,
+            wm_class=self.wm_class, machine=self.machine, title=self.title))
+
     def __eq__(self, other):
         """Return True if this window is the same as other.
 
