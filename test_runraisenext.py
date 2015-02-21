@@ -156,7 +156,7 @@ def test_raise():
     firefox should focus the Firefox window."""
     window_spec = {"command": "firefox", "wm_class": ".Firefox"}
     run_function = mock.MagicMock()
-    focused_window = wmctrl.Window('2', '0', 'pid', 'Navigator.Thunderbird',
+    focused_window = wmctrl.Window('1', '0', 'pid', 'Navigator.Thunderbird',
                                    'mistakenot', 'My Thunderbird Window')
     firefox_window = wmctrl.Window('2', '0', 'pid', 'Navigator.Firefox',
                                    'mistakenot', 'My Firefox Window')
@@ -172,7 +172,7 @@ def test_raise():
                               focused_window, focus_window_function)
 
     assert not run_function.called
-    assert focus_window_function.called_once_with(firefox_window)
+    focus_window_function.assert_called_once_with(firefox_window)
 
 
 def test_already_raised():
@@ -226,13 +226,78 @@ def test_main_calls_loop():
                               firefox_window_1, focus_window_function)
 
     assert not run_function.called
-    assert focus_window_function.called_once_with(firefox_window_2)
+    focus_window_function.assert_called_once_with(firefox_window_2)
 
 
-def test_most_recently_raised_first():
-    """When raising an app, the app's most recently focused window should be
-    focused first."""
-    raise NotImplementedError
+@mock.patch("runraisenext._load")
+@mock.patch("runraisenext._dump")
+def test_most_recently_raised_first(dump, load):
+    """Test looping through windows of apps in mosrt-recently-used order."""
+    # We'll have two Thunderbird, 1 Firefox and 3 Terminal windows.
+    thunderbird_1 = wmctrl.Window(
+        "1", "0", "pid", "Navigator.Thunderbird", "mistakenot",
+        "Thunderbird Window 1")
+    thunderbird_2 = wmctrl.Window(
+        "2", "0", "pid", "Navigator.Thunderbird", "mistakenot",
+        "Thunderbird Window 2")
+    firefox = wmctrl.Window(
+        "3", "0", "pid", "Navigator.Firefox", "mistakenot", "Firefox Window")
+    terminal_1 = wmctrl.Window(
+        "4", "0", "pid", "Terminal.Terminal", "mistakenot",
+        "Terminal Window 1")
+    terminal_2 = wmctrl.Window(
+        "5", "0", "pid", "Terminal.Terminal", "mistakenot",
+        "Terminal Window 2")
+    terminal_3 = wmctrl.Window(
+        "6", "0", "pid", "Terminal.Terminal", "mistakenot",
+        "Terminal Window 3")
+    windows = [terminal_3, terminal_2, terminal_1, firefox, thunderbird_2,
+               thunderbird_1]
+
+    dumped_object = []
+    def dump_(obj, path):
+        if dumped_object:
+            dumped_object[0] = obj
+        else:
+            dumped_object.append(obj)
+    dump.side_effect = dump_
+
+    def load_(path):
+        if dumped_object:
+            return dumped_object[0]
+        else:
+            raise IOError
+    load.side_effect = load_
+
+    def request_window(wm_class, focused_window, expected_window):
+        run_function = mock.MagicMock()
+        focus_window_function = mock.MagicMock()
+        runraisenext.runraisenext(
+            window_spec={"wm_class": wm_class},
+            run_function=run_function, open_windows=windows,
+            focused_window=focused_window,
+            focus_window_function=focus_window_function)
+        assert not run_function.called
+        focus_window_function.assert_called_once_with(expected_window)
+        return expected_window
+
+    focused_window = firefox
+    focused_window = request_window(".Terminal", focused_window, terminal_1)
+    focused_window = request_window(".Terminal", focused_window, terminal_2)
+    focused_window = request_window(".Terminal", focused_window, terminal_3)
+    focused_window = request_window(".Thunderbird",  focused_window,
+                                    thunderbird_1)
+    focused_window = request_window(".Thunderbird", focused_window,
+                                    thunderbird_2)
+    focused_window = request_window(".Terminal", focused_window, terminal_3)
+    focused_window = request_window(".Terminal", focused_window, terminal_2)
+    focused_window = request_window(".Terminal", focused_window, terminal_1)
+    focused_window = request_window(".Terminal", focused_window, terminal_3)
+    focused_window = request_window(".Terminal", focused_window, terminal_2)
+    focused_window = request_window(".Thunderbird", focused_window,
+                                    thunderbird_2)
+    focused_window = request_window(".Thunderbird", focused_window,
+                                    thunderbird_1)
 
 
 # TODO: Tests for all the command-line options.

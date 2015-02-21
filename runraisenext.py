@@ -56,20 +56,48 @@ def get_window_spec_from_file(alias, file_):
     return spec
 
 
-def pickle_file():
+def _load(path):
+    """Helper function to load an object from persistent storage.
+
+    This is a wrapper for picke.load(), we wrap it to make it easy for tests
+    to patch it and mock out the filesystem.
+
+    """
+    return pickle.load(path)
+
+
+def _dump(obj, path):
+    """Helper function to persist an object.
+
+    This is a wrapper for picke.dump(), we wrap it to make it easy for tests
+    to patch it and mock out the filesystem.
+
+    """
+    pickle.dump(obj, path)
+
+
+def pickle_path():
     """Return the path to the file we use to track windows in mru order."""
     return os.path.abspath(os.path.expanduser("~/.runraisenext.pickle"))
 
 
-def windows():
-    """Return the list of open windows in most-recently-used order."""
-    with open(pickle_file(), "r") as file_:
-        try:
-            pickled_window_list = pickle.load(file_)
-        except IOError:
-            # This happens when the picke file doesn't exist yet, for example.
-            pickled_window_list = []
-    current_window_list = wmctrl.windows()
+def sorted_(current_window_list):
+    """Return the given list of open windows in most-recently-used order.
+
+    :param current_window_list: the list of currently open windows,
+        in any order
+    :type current_window_list: list of Window objects
+
+    :returns: the given list of currently opened windows, sorted into
+        most-recently-used-first oder
+    :rtype: list of Window objects
+
+    """
+    try:
+        with open(pickle_path(), "r") as file_:
+            pickled_window_list = _load(file_)
+    except (IOError, EOFError):
+        pickled_window_list = []
 
     # Remove windows that have been closed since the last time we ran.
     pickled_window_list = [
@@ -101,8 +129,8 @@ def update_pickled_window_list(open_windows, newly_focused_window):
         "There shouldn't be more than one instance of the same window in "
         "the list of open windows")
     open_windows.insert(0, newly_focused_window)
-    with open(pickle_file(), "w") as file_:
-        pickle.dump(open_windows, file_)
+    with open(pickle_path(), "w") as file_:
+        _dump(open_windows, file_)
 
 
 def matches(window, window_spec):
@@ -193,6 +221,8 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
         representing the window to be focused
 
     """
+    open_windows = sorted_(open_windows)
+
     # If no window spec options were given, just run the command
     # (if there is one).
     if ('id' not in window_spec and
@@ -310,7 +340,7 @@ def parse_command_line_arguments(args):
 
 def main(args):
     window_spec = parse_command_line_arguments(args)
-    return runraisenext(window_spec, run, windows(),
+    return runraisenext(window_spec, run, wmctrl.windows(),
                         wmctrl.focused_window(), focus_window)
 
 
