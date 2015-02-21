@@ -100,10 +100,17 @@ def _get_focused_window_from_wmctrl():
     """
     # wmctrl doesn't provide a good way to get the currently focused window,
     # but this works.
-    return _run("wmctrl -a :ACTIVE: -v")
+    try:
+        return _run("wmctrl -a :ACTIVE: -v")
+    except subprocess.CalledProcessError:
+        # This happens if there is no focused window (wmctrl exits with status
+        # 1).
+        return None
 
 
 def _focused_window(output, windows):
+    if output is None:
+        return None
     lines = [line for line in output.split("\n")]
     assert len(lines) == 3
     window_id = lines[1].split()[-1]
