@@ -73,13 +73,13 @@ class Window(object):
 
 
 def _windows(wmctrl_output):
-    windows = []
+    windows_ = []
     for line in wmctrl_output.split("\n"):
         if not line:
             continue
-        windows.append(Window(**_parse_wmctrl_window_line(line)))
+        windows_.append(Window(**_parse_wmctrl_window_line(line)))
 
-    return windows
+    return windows_
 
 
 def windows():
