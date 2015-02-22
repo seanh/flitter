@@ -126,7 +126,7 @@ class TestRunRaiseNext(object):
         assert runraisenext.matches(window, spec)
 
     def test_with_command_only(self):
-        """runraisenext -c firefox should run the firefox` command.
+        """`runraisenext -c firefox` should run the `firefox` command.
 
         If just a command is given and no window spec or alias, it should just
         run that command.
@@ -140,7 +140,7 @@ class TestRunRaiseNext(object):
             wmctrl.Window('1', '0', 'pid', 'Navigator.Firefox', 'mistakenot',
                           'My Firefox Window'),
             focused_window,
-            wmctrl.Window('1', '0', 'pid', 'Terminal.Terminal', 'mistakenot',
+            wmctrl.Window('2', '0', 'pid', 'Terminal.Terminal', 'mistakenot',
                           'My Terminal Window'),
         ]
         focus_window_function = mock.MagicMock()
@@ -184,7 +184,7 @@ class TestRunRaiseNext(object):
             wmctrl.Window('1', '0', 'pid', 'Navigator.Gvim', 'mistakenot',
                           'My GVim Window'),
             focused_window,
-            wmctrl.Window('1', '0', 'pid', 'Terminal.Terminal', 'mistakenot',
+            wmctrl.Window('2', '0', 'pid', 'Terminal.Terminal', 'mistakenot',
                           'My Terminal Window'),
         ]
         focus_window_function = mock.MagicMock()
@@ -241,7 +241,7 @@ class TestRunRaiseNext(object):
         assert not run_function.called
         assert not focus_window_function.called
 
-    def test_main_calls_loop(self):
+    def test_looping(self):
         """If there are multiple Firefox windows open and one of them is
         focused, runraisenext firefox should focus the next Firefox windows.
 
