@@ -72,7 +72,7 @@ def get_ignore_from_file(file_):
 def _load(path):
     """Helper function to load an object from persistent storage.
 
-    This is a wrapper for picke.load(), we wrap it to make it easy for tests
+    This is a wrapper for pickle.load(), we wrap it to make it easy for tests
     to patch it and mock out the filesystem.
 
     """
@@ -82,7 +82,7 @@ def _load(path):
 def _dump(obj, path):
     """Helper function to persist an object.
 
-    This is a wrapper for picke.dump(), we wrap it to make it easy for tests
+    This is a wrapper for pickle.dump(), we wrap it to make it easy for tests
     to patch it and mock out the filesystem.
 
     """
