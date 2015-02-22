@@ -255,6 +255,17 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
         representing the window to be focused
 
     """
+    def focus_window(window):
+        """Call focus_window_function() on the given window.
+
+        Also moves the newly-focused window to the top of the
+        most-recently-used-windows list, which we want to do whenever we
+        focus a window.
+
+        """
+        focus_window_function(window)
+        update_pickled_window_list(open_windows, window)
+
     if not ignore:
         ignore = []
 
@@ -292,8 +303,7 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
         run_window_spec_command(window_spec, run_function)
     elif focused_window not in matching_windows:
         # The requested app isn't focused. Focus its most recently used window.
-        focus_window_function(matching_windows[0])
-        update_pickled_window_list(open_windows, matching_windows[0])
+        focus_window(matching_windows[0])
     elif len(matching_windows) == 1 and focused_window in matching_windows:
         # The app has one window open and it's already focused, do nothing.
         pass
@@ -306,14 +316,12 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
             assert focused_window != unvisited[0], (
                 "We shouldn't be trying to switch to the window that's "
                 "already focused")
-            focus_window_function(unvisited[0])
-            update_pickled_window_list(open_windows, unvisited[0])
+            focus_window(unvisited[0])
         else:
             assert focused_window != matching_windows[-1], (
                 "We shouldn't be trying to switch to the window that's "
                 "already focused")
-            focus_window_function(matching_windows[-1])
-            update_pickled_window_list(open_windows, matching_windows[-1])
+            focus_window(matching_windows[-1])
 
 
 def parse_command_line_arguments(args):
