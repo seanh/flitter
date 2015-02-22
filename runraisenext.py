@@ -118,9 +118,11 @@ def sorted_(current_window_list):
 
     # Add windows that have been opened since the last time we ran to the front
     # of the list.
+    new_windows = []
     for window in current_window_list:
         if window not in pickled_window_list:
-            pickled_window_list.insert(0, window)
+            new_windows.append(window)
+    pickled_window_list = new_windows + pickled_window_list
 
     return pickled_window_list
 
@@ -226,7 +228,7 @@ def _get_other_windows(windows, specs):
 
 
 def runraisenext(window_spec, run_function, open_windows, focused_window,
-                 focus_window_function, window_specs=None):
+                 focus_window_function, others=False, window_specs=None):
     """Either run the app, raise the app, or go to the app's next window.
 
     Depending on whether the app has any windows open and whether the app is
@@ -254,7 +256,7 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
 
     # If no window spec options were given, just run the command
     # (if there is one).
-    if (not window_spec.get("others") and
+    if (not others and
         'id' not in window_spec and
         'desktop' not in window_spec and
         'pid' not in window_spec and
@@ -269,7 +271,7 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
         run_window_spec_command(window_spec, run_function)
         return
 
-    if window_spec.get("others"):
+    if others:
         matching_windows = _get_other_windows(open_windows, window_specs)
     else:
         matching_windows = [window for window in open_windows
@@ -294,9 +296,15 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
         assert focused_window in matching_windows and len(matching_windows) > 1
         unvisited = _unvisited_windows(matching_windows, open_windows)
         if unvisited:
+            assert focused_window != unvisited[0], (
+                "We shouldn't be trying to switch to the window that's "
+                "already focused")
             focus_window_function(unvisited[0])
             update_pickled_window_list(open_windows, unvisited[0])
         else:
+            assert focused_window != matching_windows[-1], (
+                "We shouldn't be trying to switch to the window that's "
+                "already focused")
             focus_window_function(matching_windows[-1])
             update_pickled_window_list(open_windows, matching_windows[-1])
 
@@ -385,17 +393,16 @@ def parse_command_line_arguments(args):
         window_spec['title'] = args.title
     if args.command is not None:
         window_spec['command'] = args.command
-    if args.others:
-        window_spec["others"] = True
 
-    return window_spec, args.file
+    return window_spec, args.file, args.others
 
 
 def main(args):
-    window_spec, config_file = parse_command_line_arguments(args)
+    window_spec, config_file, others = parse_command_line_arguments(args)
     return runraisenext(window_spec, run, wmctrl.windows(),
                         wmctrl.focused_window(), focus_window,
-                        get_all_window_specs_from_file(config_file).values())
+                        others=others,
+                        window_specs=get_all_window_specs_from_file(config_file).values())
 
 
 if __name__ == "__main__":
