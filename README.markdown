@@ -176,3 +176,13 @@ To run the tests do:
 To run the tests and produce a test coverage report, do:
 
     $ nosetests --with-coverage --cover-inclusive --cover-erase --cover-tests
+
+To upload a new release of Flitter to PyPI ans GitHub:
+
+1. Update the version number in [setup.py](setup.py).
+2. `python setup.py sdist`
+3. `python setup.py sdist upload`
+4. `git commit setup.py -m "Release version X.Y.Z"`
+5. `git tag X.Y.Z`
+6. `git push`
+7. `git push --tags`
