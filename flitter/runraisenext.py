@@ -428,14 +428,12 @@ def parse_command_line_arguments(args):
     return window_spec, all_window_specs, ignore, args.others
 
 
-def main(args):
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
     window_spec, all_window_specs, ignore, others = (
         parse_command_line_arguments(args))
     return runraisenext(window_spec, run, wmctrl.windows(),
                         wmctrl.focused_window(), focus_window,
                         others=others, ignore=ignore,
                         window_specs=all_window_specs)
-
-
-if __name__ == "__main__":
-    main(sys.argv[1:])

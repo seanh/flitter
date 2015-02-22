@@ -2,7 +2,7 @@
 
 import mock
 
-import wmctrl
+import flitter.wmctrl as wmctrl
 
 
 def test_parse_wmctrl_window_line():

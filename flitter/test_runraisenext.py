@@ -2,8 +2,8 @@
 
 import mock
 
-import runraisenext
-import wmctrl
+import flitter.runraisenext as runraisenext
+import flitter.wmctrl as wmctrl
 
 
 class TestRunRaiseNext(object):
@@ -27,7 +27,7 @@ class TestRunRaiseNext(object):
         """
         self.dumped_object = None
 
-        self.dump_patcher = mock.patch('runraisenext._dump')
+        self.dump_patcher = mock.patch('flitter.runraisenext._dump')
         mock_dump_function = self.dump_patcher.start()
 
         def dump_(obj, path):
@@ -35,7 +35,7 @@ class TestRunRaiseNext(object):
 
         mock_dump_function.side_effect = dump_
 
-        self.load_patcher = mock.patch('runraisenext._load')
+        self.load_patcher = mock.patch('flitter.runraisenext._load')
         mock_load_function = self.load_patcher.start()
 
         def load_(path):
