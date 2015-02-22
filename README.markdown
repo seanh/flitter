@@ -38,7 +38,7 @@ Compared to using the mouse or traditional fast window switching shortcuts
   keys at once (Alt+Tab, Tab, Tab...). Just hit one function key.
 * You only need to use one key (perhaps hitting it
   repeatedly) to get to a window, no Alt+Tab,Tab,Tab to get to an app then
-  Alt+`,`,` or Alt+down,left,left to get to the window.
+  Alt+\`,\`,\` or Alt+down,left,left to get to the window.
 * You don't need to look at or think about anything on screen other than the
   app windows themselves as they're focused (no finding the right icon in an
   Alt-Tab dialog)
