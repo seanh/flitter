@@ -6,68 +6,126 @@
 [![Development Status](https://pypip.in/status/flitter/badge.svg)](https://pypi.python.org/pypi/flitter/)
 [![License](https://pypip.in/license/flitter/badge.svg)](https://pypi.python.org/pypi/flitter/)
 
-A script for launching apps and switching windows.
 
-Requires wmctrl: <http://tomas.styblo.name/wmctrl/>  
-On Ubuntu:
+Flitter
+=======
+
+Flitter makes launching apps and switching between windows as fast and easy
+as possible:
+
+* F1 launches Firefox, or focuses the Firefox window if Firefox is already
+  running.
+* If there's more than one Firefox window open, repeatedly hitting F1 cycles
+  through them.
+* F2 does the same for gVim.
+* And so on, binding all your most-frequently used apps to the function keys
+  or other keyboard shortcuts (you configure the apps and shortcuts yourself).
+* I have F1..F10 bound to my 10 most frequently used apps, and F11 cycling
+  through all other windows that don't belong to my top ten apps.
+* When moving between apps Flitter raises each app's most recently used window
+  first, and when cycling through an app's windows it goes through them in
+  most-recently-used-first order.
+
+Compared to using the mouse or traditional fast window switching shortcuts
+(like Alt-Tab), with Flitter:
+
+* You don't need to keep track of which apps are open and closed.
+  Let the computer do that. F1 just takes you to Firefox, opening it if
+  necessary. You can only Alt-Tab to an app if it's open, if not you have to
+  do something else to launch it.
+* You never need to use the mouse to open apps or switch windows.
+* You never need to use two hands or two finger contortions to press multiple
+  keys at once (Alt+Tab, Tab, Tab...). Just hit one function key.
+* You only need to use one key (perhaps hitting it
+  repeatedly) to get to a window, no Alt+Tab,Tab,Tab to get to an app then
+  Alt+`,`,` or Alt+down,left,left to get to the window.
+* You don't need to look at or think about anything on screen other than the
+  app windows themselves as they're focused (no finding the right icon in an
+  Alt-Tab dialog)
+* Very finger memory compatible, your hands will quickly memorize F1 for
+  Firefox, F5 for Thunderbird, F8 for Skype, and you'll be switching apps at
+  the speed of thought.
+
+Repeatedly hitting F1 to cycle through Firefox windows doesn't scale well if
+you have dozens of Firefox windows open.
+But personally I usually have just one, and never more than three or four,
+windows per app (and then sometimes several tabs within each window) and
+Flitter works great for me (focusing the most recently used windows first makes
+a big difference).
+
+Binding each function key to an app doesn't scale when you have more apps than
+function keys. You can just fall back on Alt-Tab for apps outside of your top
+12, but `flitter --others` (see below) gives you a key for cycling through
+windows that don't belong to any of your bound apps. I find this lets me avoid
+Alt-Tab entirely.
+
+
+Requirements
+------------
+
+Flitter requires Python 2.7, [wmctrl](http://tomas.styblo.name/wmctrl/) and
+works with any WMH/NetWM compatible X Window Manager (Gnome, Unity, Openbox...)
+
+It doesn't work on Windows, OS X, or non-WMH/NetWM linux environments yet,
+although porting should be possible (just replace
+[wmctrl.py](https://github.com/seanh/flitter/blob/master/flitter/wmctrl.py)
+with something capable of interacting with your desktop's windows).
+
+
+Installation
+------------
+
+First install wmctrl. On Debian or Ubuntu, just:
 
     $ sudo apt-get install wmctrl
 
+Then install Flitter:
 
-Usage
------
+    $ pip install flitter
 
-For example, to go to Firefox do:
 
-    runraisenext.py firefox
+Configuration & Usage
+---------------------
 
-This will:
+Copy the [default configuration file](https://github.com/seanh/flitter/blob/master/flitter/flitter.json)
+to `~/.flitter.json`. This is a [JSON](http://json.org/) file containing a list
+of _window specs_. Window specs are how Flitter knows which windows belong to
+which app. Each spec has a name, such as `Firefox`, and a number of properties
+that are matched against the properties of your open windows to decide whether
+each window is a Firefox window or not. For example:
 
-* launch Firefox, if Firefox is not already open
-* focus the Firefox window, if Firefox is already open but not focused
-* focus the next Firefox window, if there are multiple Firefox windows
-  open and one of them is already focused.
-
-Bind this command to a keyboard shortcut, e.g. F2, and you can always press F2
-to get to Firefox, whether Firefox is running or not. If there are multiple
-Firefox windows, just keep hitting F2 until you get to the one you want.
-It will even restore minimized windows and switch between desktops, if you have
-Firefox windows open on different desktops.
-
-If you bind different commands to different keys, e.g.:
-
-    F1: runraisenext.py terminal
-    F2: runraisenext.py firefox
-    F3: runraisenext.py gvim
-
-then you can use F1, F2, and F3 to switch between Terminal, Firefox and gVim
-as you work.
-
-The arguments that you can give on the command line (terminal, firefox, gvim,
-etc.) must be defined in a `~/.flitter.json` file. For example:
-
-    {
-        "Terminal": {
-            "wm_class": ".Gnome-terminal",
-            "command": "gnome-terminal"
-        },
         "Firefox": {
             "wm_class": ".Firefox",
             "command": "firefox"
         },
-        "gVim": {
-            "wm_class": ".Gvim",
-            "command": "gvim"
-        }
-    }
 
-Each of these JSON objects is a **window specification**, telling
-`runraisenext.py` how to identify which windows belong to the given app.
-The Firefox spec above tells `runraisenext.py` to focus or cycle through any
-windows whose WM_CLASS contains the string ".Firefox", or to run the command
-`firefox` if there are no matching windows.
+This window spec will match all windows whose WM_CLASS property contains the
+string ".Firefox" (in other words, all Firefox windows).
 
-A window spec can take up to 6 attributes to match windows against:
+To have Flitter raise a Firefox window or launch Firefox, run it with the
+spec's name as the command-line argument:
+
+    $ flitter firefox
+
+Flitter doesn't have built-in support for keyboard shortcuts.
+You just use whatever mechanism your window manager provides to bind keyboard
+shortcuts to flitter commands.
+
+To see a list of all your open windows and their properties so you can write
+window specs for them, run `wmctrl -lxp` (see `man wmctrl` for more info).
+
+The `"command"` part of the spec is the command that Flitter will run to launch
+Firefox, if it finds no Firefox windows.
+
+This way of identifying windows is quite flexible. You can go beyond the simple
+one app per keyboard shortcut model, for example:
+
+* A key to switch to the Firefox window showing Google Calender or open Google
+  Calender in a new Firefox window
+* A key to switch to the Gnome Terminal window running WeeChat or open a new
+  Gnome Terminal window with the WeeChat profile
+
+The full set of attributes that you can include in a window spec is:
 
 `window_id`
   The unique ID of an open window, e.g. 0x0180000b
@@ -87,30 +145,27 @@ A window spec can take up to 6 attributes to match windows against:
 `title`
   The window title
 
-If you want to add your own window specs to the `~/.flitter.json` file,
-use the `wmctrl -lxp` command to see what attributes to match against.
-Usually the second half of the WM_CLASS (the part after the dot, e.g.
-".Firefox" in "Navigator.Firefox") will match all windows belonging to a given
-app.
 
-Any of the properties of a window spec can also be given as command-line
-arguments. For example, instead of:
+Development Install
+-------------------
 
-    runraisenext.py firefox
+To install Flitter in a virtual environment for development:
 
-you can do:
+    virtualenv flitter
+    . flitter/bin/activate
+    cd flitter
+    pip install -e 'git+https://github.com/seanh/flitter.git#egg=flitter'
 
-    runraisenext.py --wm_class .Firefox --command firefox
+`which flitter` should not report the flitter binary in your virtualenv.
 
-Any options given on the command line will override those from the config
-file. See `runraisenext.py -h` for a full list of command-line options.
+To run the tests do:
 
-If multiple window attributes are given `runraisenext.py` will match against
-all of them at once. For example, to go to the Nautilus file browser window for
-the Foobar folder, do:
+    cd src/flitter
+    pip install -r dev-requirements.txt
+    nosetests
 
-    runraisenext.py --wm_class .Nautilus --title Foobar
+To run the tests and produce a test coverage report, do:
 
-To cycle through all open windows without matching windows, do:
+    nosetests --with-coverage --cover-inclusive --cover-erase --cover-tests
 
-    runraisenext.py --all
+
