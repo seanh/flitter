@@ -108,13 +108,13 @@ def _get_focused_window_from_wmctrl():
         return None
 
 
-def _focused_window(output, windows):
+def _focused_window(output, windows_):
     if output is None:
         return None
     lines = [line for line in output.split("\n")]
     assert len(lines) == 3
     window_id = lines[1].split()[-1]
-    matching_windows = [window for window in windows
+    matching_windows = [window for window in windows_
                         if window.window_id == window_id]
     assert len(matching_windows) == 1
     current_window = matching_windows[0]
