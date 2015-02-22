@@ -76,7 +76,8 @@ def _load(path):
     to patch it and mock out the filesystem.
 
     """
-    return pickle.load(path)
+    with open(path, "r") as file_:
+        return pickle.load(file_)
 
 
 def _dump(obj, path):
@@ -86,7 +87,8 @@ def _dump(obj, path):
     to patch it and mock out the filesystem.
 
     """
-    pickle.dump(obj, path)
+    with open(path, "w") as file_:
+        pickle.dump(obj, file_)
 
 
 def pickle_path():
@@ -107,8 +109,7 @@ def sorted_(current_window_list):
 
     """
     try:
-        with open(pickle_path(), "r") as file_:
-            pickled_window_list = _load(file_)
+        pickled_window_list = _load(pickle_path())
     except (IOError, EOFError):
         pickled_window_list = []
 
@@ -144,8 +145,7 @@ def update_pickled_window_list(open_windows, newly_focused_window):
         "There shouldn't be more than one instance of the same window in "
         "the list of open windows")
     open_windows.insert(0, newly_focused_window)
-    with open(pickle_path(), "w") as file_:
-        _dump(open_windows, file_)
+    _dump(open_windows, pickle_path())
 
 
 def matches(window, window_spec):
