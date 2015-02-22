@@ -339,8 +339,7 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
 
 
 def parse_command_line_arguments(args):
-    """Parse the command-line arguments and return the requested window spec."""
-
+    """Parse the command-line arguments."""
     parser = argparse.ArgumentParser(
         description="a script for launching apps and switching windows",
         add_help=True)
@@ -388,16 +387,16 @@ def parse_command_line_arguments(args):
     args = parser.parse_args(args)
 
     if args.window_id is not None:
-        if (args.desktop or args.pid or args.wm_class or args.machine
-                or args.title):
+        if (args.desktop or args.pid or args.wm_class or args.machine or
+                args.title):
             parser.exit(status=1,
                         message="A window ID uniquely identifies a window, "
                         "it doesn't make sense to give the -i, --id argument "
                         "at the same time as any other window spec arguments")
 
     if args.others:
-        if (args.command or args.window_id or args.desktop or args.pid
-            or args.wm_class or args.machine or args.title):
+        if (args.command or args.window_id or args.desktop or args.pid or
+                args.wm_class or args.machine or args.title):
             parser.exit(
                 "The -o/--others argument can't be used at the same time as "
                 "-c/--command, -i/--id, -d/--desktop, -p/--pid,-w/--wm_class, "
