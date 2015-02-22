@@ -56,7 +56,6 @@ class TestRunRaiseNext(object):
 
     def test_window_matches_when_matching(self):
         """matches() should return True when given a matching window spec."""
-
         specs = [
             dict(window_id="window_id"),
             dict(desktop="desktop"),
@@ -78,7 +77,6 @@ class TestRunRaiseNext(object):
 
     def test_window_matches_when_not_matching(self):
         """matches() should return False when given a non-matching spec."""
-
         specs = [
             dict(window_id="different_window_id"),
             dict(desktop="different_desktop"),
@@ -197,7 +195,9 @@ class TestRunRaiseNext(object):
 
     def test_raise(self):
         """If there's a Firefox window open but it's not focused, runraisenext
-        firefox should focus the Firefox window."""
+        firefox should focus the Firefox window.
+
+        """
         window_spec = {"command": "firefox", "wm_class": ".Firefox"}
         run_function = mock.MagicMock()
         focused_window = wmctrl.Window('1', '0', 'pid',
@@ -221,7 +221,9 @@ class TestRunRaiseNext(object):
 
     def test_already_raised(self):
         """If there's one Firefox window open and it's already focused,
-        runraisenext firefox should do nothing."""
+        runraisenext firefox should do nothing.
+
+        """
         window_spec = {"command": "firefox", "wm_class": ".Firefox"}
         run_function = mock.MagicMock()
         firefox_window = wmctrl.Window('2', '0', 'pid', 'Navigator.Firefox',
