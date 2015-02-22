@@ -68,7 +68,7 @@ works with any WMH/NetWM compatible X Window Manager (Gnome, Unity, Openbox...)
 
 It doesn't work on Windows, OS X, or non-WMH/NetWM linux environments yet,
 although porting should be possible (just replace
-[wmctrl.py](https://github.com/seanh/flitter/blob/master/flitter/wmctrl.py)
+[wmctrl.py](flitter/wmctrl.py)
 with something capable of interacting with your desktop's windows).
 
 
@@ -90,7 +90,7 @@ Run `flitter -h` for help.
 Configuration & Usage
 ---------------------
 
-Copy the [default configuration file](https://github.com/seanh/flitter/blob/master/flitter/flitter.json)
+Copy the [default configuration file](flitter/flitter.json)
 to `~/.flitter.json`. This is a [JSON](http://json.org/) file containing a list
 of _window specs_. Window specs are how Flitter knows which windows belong to
 which app. Each spec has a name, such as `Firefox`, and a number of properties
