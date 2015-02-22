@@ -10,13 +10,6 @@ import pickle
 import wmctrl
 
 
-# A list of wm_classes that we ignore.
-# Will want to turn this into a command-line and config option at some point.
-WINDOWS_TO_IGNORE = [
-    "desktop_window.Nautilus",
-    "Conky.Conky",
-]
-
 def run(command):
     """Run the given shell command as a subprocess."""
     subprocess.call(command, shell=True)
@@ -50,7 +43,7 @@ def focus_window(window):
 def get_all_window_specs_from_file(file_):
     """Return a list of all the window specs from the given config file."""
     specs = json.loads(
-        open(os.path.abspath(os.path.expanduser(file_)), 'r').read())
+        open(os.path.abspath(os.path.expanduser(file_)), 'r').read())["specs"]
     lowercased_specs = {}
     for key in specs:
         assert key.lower() not in lowercased_specs
@@ -67,6 +60,13 @@ def get_window_spec_from_file(alias, file_):
     specs = get_all_window_specs_from_file(file_)
     spec = specs[alias.lower()]
     return spec
+
+
+def get_ignore_from_file(file_):
+    """Return the list of window specs to ignore from the given config file."""
+    return json.loads(
+        open(os.path.abspath(os.path.expanduser(file_)), 'r').read())[
+            "ignore"]
 
 
 def _load(path):
@@ -188,6 +188,14 @@ def matches(window, window_spec):
     return True
 
 
+def matches_any(window, specs):
+    """Return True if the given window matches any of the given specs."""
+    for spec in specs:
+        if matches(window, spec):
+            return True
+    return False
+
+
 def _unvisited_windows(matching_windows, open_windows):
     """Return the list of matching windows that we haven't looped through yet.
 
@@ -218,17 +226,12 @@ def _get_other_windows(windows, specs):
     window spec dicts in specs. These are called the "other" windows.
 
     """
-    def matches_any(window):
-        """Return True if the given window matches any of the specs."""
-        for spec in specs:
-            if matches(window, spec):
-                return True
-        return False
-    return [w for w in windows if not matches_any(w)]
+    return [w for w in windows if not matches_any(w, specs)]
 
 
 def runraisenext(window_spec, run_function, open_windows, focused_window,
-                 focus_window_function, others=False, window_specs=None):
+                 focus_window_function, others=False, window_specs=None,
+                 ignore=None):
     """Either run the app, raise the app, or go to the app's next window.
 
     Depending on whether the app has any windows open and whether the app is
@@ -252,6 +255,9 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
         representing the window to be focused
 
     """
+    if not ignore:
+        ignore = []
+
     open_windows = sorted_(open_windows)
 
     # If no window spec options were given, just run the command
@@ -277,8 +283,9 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
         matching_windows = [window for window in open_windows
                             if matches(window, window_spec)]
 
+
     matching_windows = [w for w in matching_windows
-                        if w.wm_class not in WINDOWS_TO_IGNORE]
+                        if not matches_any(w, ignore)]
 
     if not matching_windows:
         # The requested app is not open, launch it.
@@ -394,15 +401,19 @@ def parse_command_line_arguments(args):
     if args.command is not None:
         window_spec['command'] = args.command
 
-    return window_spec, args.file, args.others
+    ignore = get_ignore_from_file(args.file)
+    all_window_specs = get_all_window_specs_from_file(args.file).values()
+
+    return window_spec, all_window_specs, ignore, args.others
 
 
 def main(args):
-    window_spec, config_file, others = parse_command_line_arguments(args)
+    window_spec, all_window_specs, ignore, others = (
+        parse_command_line_arguments(args))
     return runraisenext(window_spec, run, wmctrl.windows(),
                         wmctrl.focused_window(), focus_window,
-                        others=others,
-                        window_specs=get_all_window_specs_from_file(config_file).values())
+                        others=others, ignore=ignore,
+                        window_specs=all_window_specs)
 
 
 if __name__ == "__main__":

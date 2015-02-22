@@ -428,4 +428,60 @@ class TestRunRaiseNext(object):
         focused_window = request_other(focused_window, other_window_3)
         focused_window = request_other(focused_window, other_window_1)
 
+    def test_ignore_windows(self):
+        """runraisenext -o should skip ignored windows."""
+        ignored_window_1 = wmctrl.Window(
+            "1", "0", "pid", "desktop_window.Nautilus", "mistakenot",
+            "Desktop")
+        ignored_window_2 = wmctrl.Window(
+            "2", "0", "pid", "Conky.Conky", "mistakenot",
+            "Conky (mistakenot)")
+        known_window = wmctrl.Window(
+            "3", "0", "pid", "Navigator.Thunderbird", "mistakenot",
+            "Thunderbird")
+        other_window_1 = wmctrl.Window(
+            "4", "0", "pid",
+            "org.gnome.Weather.Application.Org.gnome.Weather.Application",
+            "mistakenot", "Weather")
+        other_window_2 = wmctrl.Window(
+            "5", "0", "pid", "baobab.Baobab", "mistakenot",
+            "Disk Usage Analyzer")
+        other_window_3 = wmctrl.Window(
+            "6", "0", "pid", "gnome-clocks.Gnome-clocks", "mistakenot",
+            "Clocks")
+        windows = [ignored_window_1, ignored_window_2, known_window,
+                   other_window_1, other_window_2, other_window_3]
+        window_specs = [dict(wm_class=".Thunderbird")]
+        ignore = [
+            dict(wm_class="desktop_window.Nautilus"),
+            dict(wm_class="Conky.Conky")
+        ]
+        run_function = mock.MagicMock()
+
+        def request_other(focused_window, expected_window):
+            """Do `runraisenext --others`.
+
+            And assert that the expected_window was raised.
+
+            """
+            focus_window_function = mock.MagicMock()
+            runraisenext.runraisenext(
+                window_spec={},
+                run_function=run_function,
+                open_windows=windows,
+                focused_window=focused_window,
+                focus_window_function=focus_window_function,
+                others=True, ignore=ignore,
+                window_specs=window_specs)
+            assert not run_function.called
+            focus_window_function.assert_called_once_with(expected_window)
+            return expected_window
+
+        # First move from a known window to the first other window.
+        focused_window = request_other(known_window, other_window_1)
+        # Now loop through the other windows.
+        focused_window = request_other(focused_window, other_window_2)
+        focused_window = request_other(focused_window, other_window_3)
+        focused_window = request_other(focused_window, other_window_1)
+
     # TODO: Tests for all the command-line options.
