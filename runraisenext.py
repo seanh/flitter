@@ -96,7 +96,7 @@ def pickle_path():
     return os.path.abspath(os.path.expanduser("~/.runraisenext.pickle"))
 
 
-def sorted_(current_window_list):
+def sorted_most_recently_used(current_window_list):
     """Return the given list of open windows in most-recently-used order.
 
     :param current_window_list: the list of currently open windows,
@@ -284,7 +284,7 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
     if not ignore:
         ignore = []
 
-    open_windows = sorted_(open_windows)
+    open_windows = sorted_most_recently_used(open_windows)
 
     # If no window spec options were given, just run the command
     # (if there is one).
