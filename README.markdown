@@ -1,3 +1,11 @@
+[![Build Status](https://travis-ci.org/seanh/flitter.svg)](https://travis-ci.org/seanh/flitter)
+[![Coverage Status](https://img.shields.io/coveralls/seanh/flitter.svg)](https://coveralls.io/r/seanh/flitter)
+[![Latest Version](https://pypip.in/version/flitter/badge.svg)](https://pypi.python.org/pypi/flitter/)
+[![Downloads](https://pypip.in/download/flitter/badge.svg)](https://pypi.python.org/pypi/flitter/)
+[![Supported Python versions](https://pypip.in/py_versions/flitter/badge.svg)](https://pypi.python.org/pypi/flitter/)
+[![Development Status](https://pypip.in/status/flitter/badge.svg)](https://pypi.python.org/pypi/flitter/)
+[![License](https://pypip.in/license/flitter/badge.svg)](https://pypi.python.org/pypi/flitter/)
+
 A script for launching apps and switching windows.
 
 Requires wmctrl: <http://tomas.styblo.name/wmctrl/>  
