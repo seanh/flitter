@@ -102,7 +102,7 @@ def sorted_(current_window_list):
     :type current_window_list: list of Window objects
 
     :returns: the given list of currently opened windows, sorted into
-        most-recently-used-first oder
+        most-recently-used-first order
     :rtype: list of Window objects
 
     """
