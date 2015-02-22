@@ -91,7 +91,6 @@ def test_windows():
 
 def test_focus():
     """Test that Window._focus() calls _run() as we expect it to."""
-
     window = wmctrl.Window('test_window_id', 'desktop', 'pid',
                            'Navigator.Firefox', 'machine', 'title')
     mock_run_function = mock.MagicMock()
