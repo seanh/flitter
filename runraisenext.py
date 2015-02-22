@@ -309,7 +309,6 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
         matching_windows = [window for window in open_windows
                             if matches(window, window_spec)]
 
-
     matching_windows = [w for w in matching_windows
                         if not matches_any(w, ignore)]
 
