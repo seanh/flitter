@@ -1,6 +1,6 @@
 """A Python wrapper library for the wmctrl program.
 
-It only wraps the wmctrl features that runraisenext needs, ignores the rest.
+It only wraps the wmctrl features that Flitter needs, ignores the rest.
 
 """
 import subprocess

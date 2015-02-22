@@ -14,7 +14,7 @@ class TestRunRaiseNext(object):
         """Patch the _dump() and _load() functions.
 
         runraisenext() dumps a list of open windows in most-recently-used order
-        to ~/.runraisenext.pickle, and loads it again each time.
+        to ~/.flitter.pickle, and loads it again each time.
 
         We patch the _dump() and _load() functions to mock out this filesystem
         access in the tests, replacing them with functions that just save
@@ -42,7 +42,7 @@ class TestRunRaiseNext(object):
             if self.dumped_object is None:
                 # We're assuming that runraisenext() never actually tries to
                 # dump the value None, and simulating what happens when the
-                # ~/.runraisenext.pickle file doesn't exist.
+                # ~/.flitter.pickle file doesn't exist.
                 raise IOError
             else:
                 return self.dumped_object
@@ -124,7 +124,7 @@ class TestRunRaiseNext(object):
         assert runraisenext.matches(window, spec)
 
     def test_with_command_only(self):
-        """`runraisenext -c firefox` should run the `firefox` command.
+        """`flitter -c firefox` should run the `firefox` command.
 
         If just a command is given and no window spec or alias, it should just
         run that command.
@@ -151,7 +151,7 @@ class TestRunRaiseNext(object):
         assert not focus_window_function.called
 
     def test_with_no_open_windows(self):
-        """`runraisenext firefox` should run `firefox` if no open windows.
+        """`flitter firefox` should run `firefox` if no open windows.
 
         If there are no open windows it should just run the command associated
         with the given window spec.
@@ -167,7 +167,7 @@ class TestRunRaiseNext(object):
         assert not focus_window_function.called
 
     def test_with_no_matching_windows(self):
-        """`runraisenext firefox` should run `firefox` if no firefox windows.
+        """`flitter firefox` should run `firefox` if no firefox windows.
 
         If there are no open windows that match the given window spec, it
         should run the window spec's command.
@@ -194,8 +194,8 @@ class TestRunRaiseNext(object):
         assert not focus_window_function.called
 
     def test_raise(self):
-        """If there's a Firefox window open but it's not focused, runraisenext
-        firefox should focus the Firefox window.
+        """If there's a Firefox window open but it's not focused,
+        `flitter firefox` should focus the Firefox window.
 
         """
         window_spec = {"command": "firefox", "wm_class": ".Firefox"}
@@ -221,7 +221,7 @@ class TestRunRaiseNext(object):
 
     def test_already_raised(self):
         """If there's one Firefox window open and it's already focused,
-        runraisenext firefox should do nothing.
+        `flitter firefox` should do nothing.
 
         """
         window_spec = {"command": "firefox", "wm_class": ".Firefox"}
@@ -245,7 +245,7 @@ class TestRunRaiseNext(object):
 
     def test_looping(self):
         """If there are multiple Firefox windows open and one of them is
-        focused, runraisenext firefox should focus the next Firefox windows.
+        focused, `flitter firefox` should focus the next Firefox windows.
 
         Repeated calls should loop through all the Firefox windows, going back
         to the first one after the last one.
@@ -405,7 +405,7 @@ class TestRunRaiseNext(object):
         run_function = mock.MagicMock()
 
         def request_other(focused_window, expected_window):
-            """Do `runraisenext --others`.
+            """Do `flitter --others`.
 
             And assert that the expected_window was raised.
 
@@ -431,7 +431,7 @@ class TestRunRaiseNext(object):
         focused_window = request_other(focused_window, other_window_1)
 
     def test_ignore_windows(self):
-        """runraisenext -o should skip ignored windows."""
+        """flitter -o should skip ignored windows."""
         ignored_window_1 = wmctrl.Window(
             "1", "0", "pid", "desktop_window.Nautilus", "mistakenot",
             "Desktop")
@@ -461,7 +461,7 @@ class TestRunRaiseNext(object):
         run_function = mock.MagicMock()
 
         def request_other(focused_window, expected_window):
-            """Do `runraisenext --others`.
+            """Do `flitter --others`.
 
             And assert that the expected_window was raised.
 

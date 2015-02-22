@@ -36,7 +36,7 @@ then you can use F1, F2, and F3 to switch between Terminal, Firefox and gVim
 as you work.
 
 The arguments that you can give on the command line (terminal, firefox, gvim,
-etc.) must be defined in a `~/.runraisenext.json` file. For example:
+etc.) must be defined in a `~/.flitter.json` file. For example:
 
     {
         "Terminal": {
@@ -79,7 +79,7 @@ A window spec can take up to 6 attributes to match windows against:
 `title`
   The window title
 
-If you want to add your own window specs to the `~/.runraisenext.json` file,
+If you want to add your own window specs to the `~/.flitter.json` file,
 use the `wmctrl -lxp` command to see what attributes to match against.
 Usually the second half of the WM_CLASS (the part after the dot, e.g.
 ".Firefox" in "Navigator.Firefox") will match all windows belonging to a given

@@ -93,7 +93,7 @@ def _dump(obj, path):
 
 def pickle_path():
     """Return the path to the file we use to track windows in mru order."""
-    return os.path.abspath(os.path.expanduser("~/.runraisenext.pickle"))
+    return os.path.abspath(os.path.expanduser("~/.flitter.pickle"))
 
 
 def sorted_most_recently_used(current_window_list):
@@ -375,7 +375,7 @@ def parse_command_line_arguments(args):
 
     parser.add_argument(
         "-f", "--file", help="use a custom config file path",
-        default="~/.runraisenext.json")
+        default="~/.flitter.json")
 
     parser.add_argument(
         "-o", "--others",
