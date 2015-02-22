@@ -1,0 +1,72 @@
+{
+    "ignore": [
+        {"wm_class": "desktop_window.Nautilus"},
+        {"wm_class": "Conky.Conky"}
+    ],
+    "specs": {
+        "Terminal": {
+            "wm_class": ".Gnome-terminal",
+            "command": "gnome-terminal",
+            "title": "Terminal"
+        },
+        "WeeChat": {
+            "wm_class": ".Gnome-terminal",
+            "command": "gnome-terminal --window-with-profile=WeeChat",
+            "title": "WeeChat"
+        },
+        "timetrap": {
+            "wm_class": ".Gnome-terminal",
+            "command": "gnome-terminal --window-with-profile=Timetrap",
+            "title": "timetrap"
+        },
+        "Firefox": {
+            "wm_class": ".Firefox",
+            "command": "firefox"
+        },
+        "Thunderbird": {
+            "wm_class": ".Thunderbird",
+            "command": "thunderbird"
+        },
+        "gVim": {
+            "wm_class": ".Gvim",
+            "command": "gvim"
+        },
+        "vim": {
+            "wm_class": ".Gnome-terminal",
+            "command": "gnome-terminal --window-with-profile=vim",
+            "title": "Vim"
+        },
+        "Smuxi": {
+            "wm_class": ".Smuxi-frontend-gnome",
+            "command": "smuxi-frontend-gnome"
+        },
+        "HexChat": {
+            "wm_class": ".hexchat",
+            "command": "hexchat"
+        },
+        "Chrome": {
+            "wm_class": "Google-chrome-stable.Google-chrome-stable",
+            "command": "google-chrome-stable"
+        },
+        "Hamster": {
+            "wm_class": "Time Tracker.Hamster",
+            "command": "hamster"
+        },
+        "Skype": {
+            "wm_class": "skype.Skype",
+            "command": "skype"
+        },
+        "Nautilus": {
+            "wm_class": "nautilus.Nautilus",
+            "command": "nautilus"
+        },
+        "Calendar": {
+            "wm_class": "www.google.com__calendar_render.Google-chrome",
+            "command": "/opt/google/chrome/google-chrome '--app=https://www.google.com/calendar/render#g%7Cmonth-3+22845+22882+22879'"
+        },
+        "Epiphany": {
+            "wm_class": ".Epiphany-browser",
+            "command": "epiphany-browser 'http://www.google.com/calendar'"
+        }
+    }
+}

@@ -338,6 +338,34 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
             _focus_window(matching_windows[-1])
 
 
+class ConfigFileError(Exception):
+    pass
+
+
+def _config_file_path(args):
+    """Return the absolute path to the config file to use.
+
+    This first uses the config file given with the -f/--f command-line
+    argument (which defaults to ~/.flitter.json if not given).
+    If that file doesn't exist it falls back on the default flitter.json file
+    that ships with Flitter in the same directory as this Python module.
+    Failing that it crashes.
+
+    """
+    path = os.path.abspath(os.path.expanduser(args.file))
+    if os.path.isfile(path):
+        return path
+
+    default_path = os.path.join(
+        os.path.split(sys.modules[__name__].__file__)[0], "flitter.json")
+    if os.path.isfile(default_path):
+        return default_path
+
+    raise ConfigFileError(
+        "Couldn't find either the config file {file} or the default config "
+        "file {default_file}".format(file=path, default_file=default_path))
+
+
 def parse_command_line_arguments(args):
     """Parse the command-line arguments."""
     parser = argparse.ArgumentParser(
@@ -402,9 +430,14 @@ def parse_command_line_arguments(args):
                 "-c/--command, -i/--id, -d/--desktop, -p/--pid,-w/--wm_class, "
                 "-m/--machine or -t/--title")
 
+    try:
+        config_file_path = _config_file_path(args)
+    except ConfigFileError as err:
+        parser.exit(err.message)
+
     # Form the window spec dict.
     if args.alias:
-        window_spec = get_window_spec_from_file(args.alias, args.file)
+        window_spec = get_window_spec_from_file(args.alias, config_file_path)
     else:
         window_spec = {}
     if args.window_id is not None:
@@ -422,8 +455,9 @@ def parse_command_line_arguments(args):
     if args.command is not None:
         window_spec['command'] = args.command
 
-    ignore = get_ignore_from_file(args.file)
-    all_window_specs = get_all_window_specs_from_file(args.file).values()
+    ignore = get_ignore_from_file(config_file_path)
+    all_window_specs = get_all_window_specs_from_file(
+        config_file_path).values()
 
     return window_spec, all_window_specs, ignore, args.others
 
