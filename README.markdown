@@ -83,6 +83,9 @@ Then install Flitter:
 
     $ pip install flitter
 
+You should now be able to run the `flitter` command in your shell.
+Run `flitter -h` for help.
+
 
 Configuration & Usage
 ---------------------
@@ -149,23 +152,27 @@ The full set of attributes that you can include in a window spec is:
 Development Install
 -------------------
 
-To install Flitter in a virtual environment for development:
+To install Flitter in a virtual environment for development first install
+virtualenv, on Debian or Ubuntu do:
 
-    virtualenv flitter
-    . flitter/bin/activate
-    cd flitter
-    pip install -e 'git+https://github.com/seanh/flitter.git#egg=flitter'
+    $ sudo apt-get install python-virtualenv
 
-`which flitter` should not report the flitter binary in your virtualenv.
+Then create and activate a Python virtual environment and install Flitter into
+it:
+
+    $ virtualenv flitter
+    $ . flitter/bin/activate
+    $ cd flitter
+    $ pip install -e 'git+https://github.com/seanh/flitter.git#egg=flitter'
+
+`which flitter` should now report the flitter binary in your virtualenv.
 
 To run the tests do:
 
-    cd src/flitter
-    pip install -r dev-requirements.txt
-    nosetests
+    $ cd src/flitter
+    $ pip install -r dev-requirements.txt
+    $ nosetests
 
 To run the tests and produce a test coverage report, do:
 
-    nosetests --with-coverage --cover-inclusive --cover-erase --cover-tests
-
-
+    $ nosetests --with-coverage --cover-inclusive --cover-erase --cover-tests
