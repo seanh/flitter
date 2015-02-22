@@ -254,6 +254,21 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
     :type focus_window_function: callable taking one argument: a Window object
         representing the window to be focused
 
+    :param others: If ``True`` go to the next "other" window ("other" windows
+        are windows that don't match any of the given window specs) instead of
+        looking for the next window that matches a particular window spec.
+        The ``window_spec`` and ``run_function`` arguments aren't used if
+        ``others`` is ``True``.
+
+    :param window_specs: A list of all the window specs from the user's config
+        file. This is only needed if ``others=True`` is given.
+    :type window_specs: list of dicts
+
+    :param ignore: A list of window specs matching windows that should be
+        ignored and never focused. This is used to skip things like desktop
+        windows, taskbars, etc.
+    :type ignore: list of dicts
+
     """
     def focus_window(window):
         """Call focus_window_function() on the given window.
