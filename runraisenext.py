@@ -289,12 +289,12 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
     # If no window spec options were given, just run the command
     # (if there is one).
     if (not others and
-        'id' not in window_spec and
-        'desktop' not in window_spec and
-        'pid' not in window_spec and
-        'wm_class' not in window_spec and
-        'machine' not in window_spec and
-        'title' not in window_spec):
+            'id' not in window_spec and
+            'desktop' not in window_spec and
+            'pid' not in window_spec and
+            'wm_class' not in window_spec and
+            'machine' not in window_spec and
+            'title' not in window_spec):
         run_window_spec_command(window_spec, run_function)
         return
 
