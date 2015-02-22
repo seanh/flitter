@@ -270,7 +270,7 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
     :type ignore: list of dicts
 
     """
-    def focus_window(window):
+    def _focus_window(window):
         """Call focus_window_function() on the given window.
 
         Also moves the newly-focused window to the top of the
@@ -318,7 +318,7 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
         run_window_spec_command(window_spec, run_function)
     elif focused_window not in matching_windows:
         # The requested app isn't focused. Focus its most recently used window.
-        focus_window(matching_windows[0])
+        _focus_window(matching_windows[0])
     elif len(matching_windows) == 1 and focused_window in matching_windows:
         # The app has one window open and it's already focused, do nothing.
         pass
@@ -331,12 +331,12 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
             assert focused_window != unvisited[0], (
                 "We shouldn't be trying to switch to the window that's "
                 "already focused")
-            focus_window(unvisited[0])
+            _focus_window(unvisited[0])
         else:
             assert focused_window != matching_windows[-1], (
                 "We shouldn't be trying to switch to the window that's "
                 "already focused")
-            focus_window(matching_windows[-1])
+            _focus_window(matching_windows[-1])
 
 
 def parse_command_line_arguments(args):
