@@ -109,13 +109,15 @@ def sorted_most_recently_used(current_window_list):
 
     """
     try:
-        pickled_window_list = _load(pickle_path())
+        pickled_window_ids = _load(pickle_path())
     except (IOError, EOFError):
-        pickled_window_list = []
+        pickled_window_ids = []
+
+    pickled_window_list = [ewmh_window.Window.window(window_id)
+                           for window_id in pickled_window_ids]
 
     # Remove windows that have been closed since the last time we ran.
-    pickled_window_list = [
-        w for w in pickled_window_list if w in current_window_list]
+    pickled_window_list = [w for w in pickled_window_list if w is not None]
 
     # Add windows that have been opened since the last time we ran to the front
     # of the list.
@@ -145,7 +147,7 @@ def update_pickled_window_list(open_windows, newly_focused_window):
         "There shouldn't be more than one instance of the same window in "
         "the list of open windows")
     open_windows.insert(0, newly_focused_window)
-    _dump(open_windows, pickle_path())
+    _dump([w.window_id for w in open_windows], pickle_path())
 
 
 def matches(window, window_spec):
@@ -231,7 +233,7 @@ def _get_other_windows(windows, specs):
 
 def runraisenext(window_spec, run_function, open_windows, focused_window,
                  focus_window_function, others=False, window_specs=None,
-                 ignore=None):
+                 ignore=None, current_desktop=False):
     """Either run the app, raise the app, or go to the app's next window.
 
     Depending on whether the app has any windows open and whether the app is
@@ -268,6 +270,10 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
         ignored and never focused. This is used to skip things like desktop
         windows, taskbars, etc.
     :type ignore: list of dicts
+
+    :param current_desktop: Only raise windows from the current desktop
+        (optional, default: False)
+    :type current_desktop: bool
 
     """
     def _focus_window(window):
@@ -311,6 +317,11 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
 
     matching_windows = [w for w in matching_windows
                         if not matches_any(w, ignore)]
+
+    if current_desktop:
+        current_desktop_ = ewmh_window.Window.focused_window().desktop
+        matching_windows = [w for w in matching_windows
+                            if w.desktop == current_desktop_]
 
     if not matching_windows:
         # The requested app is not open, launch it.
@@ -412,6 +423,11 @@ def parse_command_line_arguments(args):
              "particular window spec",
         action="store_true")
 
+    parser.add_argument(
+        "--current-desktop",
+        help="only raise windows on the currently active desktop",
+        action="store_true")
+
     args = parser.parse_args(args)
 
     if args.window_id is not None:
@@ -459,15 +475,22 @@ def parse_command_line_arguments(args):
     all_window_specs = get_all_window_specs_from_file(
         config_file_path).values()
 
-    return window_spec, all_window_specs, ignore, args.others
+    return (window_spec, all_window_specs, ignore, args.others,
+            args.current_desktop)
 
 
 def main(args=None):
     if args is None:
         args = sys.argv[1:]
-    window_spec, all_window_specs, ignore, others = (
+    window_spec, all_window_specs, ignore, others, current_desktop = (
         parse_command_line_arguments(args))
-    return runraisenext(window_spec, run, ewmh_window.Window.windows(),
-                        ewmh_window.Window.focused_window(), focus_window,
-                        others=others, ignore=ignore,
-                        window_specs=all_window_specs)
+
+    return runraisenext(window_spec,
+                        run,
+                        ewmh_window.Window.windows(),
+                        ewmh_window.Window.focused_window(),
+                        focus_window,
+                        others=others,
+                        ignore=ignore,
+                        window_specs=all_window_specs,
+                        current_desktop=current_desktop)

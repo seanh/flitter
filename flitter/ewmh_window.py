@@ -7,10 +7,6 @@ EWMH = ewmh.EWMH()
 class Window(object):
 
     def __init__(self, ewmh_window):
-        # FIXME: We don't save ewmh_window against self because ewmh_window
-        # isn't pickleable, and we do pickle these Window objects.
-        # We should fix this by having a to_pickleable() and from_pickleable()
-        # methods.
         try:
             self.desktop = EWMH.getWmDesktop(ewmh_window)
         except TypeError:
@@ -30,8 +26,8 @@ class Window(object):
 
     def focus(self):
         """Focus (activate) this window."""
-        # FIXME: Because we don't save the actual ewmh.Window object against
-        # self (see FIXME above) we have to find it again here.
+        # Because we don't save the actual ewmh.Window object against self we
+        # have to find it again here.
         for ewmh_window in EWMH.getClientList():
             if ewmh_window.id == self.window_id:
                 EWMH.setActiveWindow(ewmh_window)
@@ -39,15 +35,27 @@ class Window(object):
                 return
         assert False, "Tried to focus a window that doesn't exist (anymore)"
 
-    @classmethod
-    def windows(cls):
+    @staticmethod
+    def window(window_id):
+        """Return a Window object for the open window with the given window_id.
+
+        Returns None if there's no open window with the given window_id
+        (maybe the window has been closed).
+
+        """
+        for w in Window.windows():
+            if w.window_id == window_id:
+                return w
+
+    @staticmethod
+    def windows():
         """Return a list of Window objects for all currently open windows."""
         windows_ = []
         for ewmh_window in EWMH.getClientList():
             windows_.append(Window(ewmh_window))
         return windows_
 
-    @classmethod
-    def focused_window(cls):
+    @staticmethod
+    def focused_window():
         """Return the currently focused window."""
         return Window(EWMH.getActiveWindow())
