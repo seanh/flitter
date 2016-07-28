@@ -6,6 +6,7 @@ import subprocess
 import json
 import os
 import pickle
+import re
 
 from flitter import ewmh_window
 
@@ -185,7 +186,7 @@ def matches(window, window_spec):
     for key in window_spec.keys():
         if key == 'command':
             continue
-        if window_spec[key].lower() not in getattr(window, key, '').lower():
+        if not re.match(window_spec[key], getattr(window, key, '')):
             return False
     return True
 
