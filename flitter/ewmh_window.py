@@ -26,14 +26,22 @@ class Window(object):
 
     def focus(self):
         """Focus (activate) this window."""
+        EWMH.setActiveWindow(self.ewmh_window)
+        EWMH.display.flush()
+
+    @property
+    def ewmh_window(self):
+        """Return the underlying ewmh.Window object for this window."""
         # Because we don't save the actual ewmh.Window object against self we
         # have to find it again here.
         for ewmh_window in EWMH.getClientList():
             if ewmh_window.id == self.window_id:
-                EWMH.setActiveWindow(ewmh_window)
-                EWMH.display.flush()
-                return
+                return ewmh_window
         assert False, "Tried to focus a window that doesn't exist (anymore)"
+
+    @property
+    def minimized(self):
+        return 323 in EWMH.getWmState(self.ewmh_window)
 
     @staticmethod
     def window(window_id):

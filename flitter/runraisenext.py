@@ -233,7 +233,7 @@ def _get_other_windows(windows, specs):
 
 def runraisenext(window_spec, run_function, open_windows, focused_window,
                  focus_window_function, others=False, window_specs=None,
-                 ignore=None, current_desktop=False):
+                 ignore=None, current_desktop=False, ignore_minimized=False):
     """Either run the app, raise the app, or go to the app's next window.
 
     Depending on whether the app has any windows open and whether the app is
@@ -274,6 +274,10 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
     :param current_desktop: Only raise windows from the current desktop
         (optional, default: False)
     :type current_desktop: bool
+
+    :param ignore_minimized: Don't raise minimized windows
+        (optional, default: False)
+    :type ignore_minimized: bool
 
     """
     def _focus_window(window):
@@ -322,6 +326,9 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
         current_desktop_ = ewmh_window.Window.focused_window().desktop
         matching_windows = [w for w in matching_windows
                             if w.desktop == current_desktop_]
+
+    if ignore_minimized:
+        matching_windows = [w for w in matching_windows if not w.minimized]
 
     if not matching_windows:
         # The requested app is not open, launch it.
@@ -428,6 +435,11 @@ def parse_command_line_arguments(args):
         help="only raise windows on the currently active desktop",
         action="store_true")
 
+    parser.add_argument(
+        "--ignore-minimized",
+        help="don't raise minimized windows",
+        action="store_true")
+
     args = parser.parse_args(args)
 
     if args.window_id is not None:
@@ -476,13 +488,13 @@ def parse_command_line_arguments(args):
         config_file_path).values()
 
     return (window_spec, all_window_specs, ignore, args.others,
-            args.current_desktop)
+            args.current_desktop, args.ignore_minimized)
 
 
 def main(args=None):
     if args is None:
         args = sys.argv[1:]
-    window_spec, all_window_specs, ignore, others, current_desktop = (
+    window_spec, all_window_specs, ignore, others, current_desktop, ignore_minimized = (
         parse_command_line_arguments(args))
 
     return runraisenext(window_spec,
@@ -493,4 +505,5 @@ def main(args=None):
                         others=others,
                         ignore=ignore,
                         window_specs=all_window_specs,
-                        current_desktop=current_desktop)
+                        current_desktop=current_desktop,
+                        ignore_minimized=ignore_minimized)
