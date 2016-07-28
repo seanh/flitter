@@ -1,3 +1,2 @@
 include README.markdown
 include dev-requirements.txt
-include example_wmctrl_window_list.txt

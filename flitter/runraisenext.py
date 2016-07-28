@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 """A script for launching apps and switching windows."""
 import sys
 import argparse
@@ -7,7 +7,7 @@ import json
 import os
 import pickle
 
-import wmctrl
+from flitter import ewmh_window
 
 
 def run(command):
@@ -76,7 +76,7 @@ def _load(path):
     to patch it and mock out the filesystem.
 
     """
-    with open(path, "r") as file_:
+    with open(path, "rb") as file_:
         return pickle.load(file_)
 
 
@@ -87,7 +87,7 @@ def _dump(obj, path):
     to patch it and mock out the filesystem.
 
     """
-    with open(path, "w") as file_:
+    with open(path, "wb") as file_:
         pickle.dump(obj, file_)
 
 
@@ -467,7 +467,7 @@ def main(args=None):
         args = sys.argv[1:]
     window_spec, all_window_specs, ignore, others = (
         parse_command_line_arguments(args))
-    return runraisenext(window_spec, run, wmctrl.windows(),
-                        wmctrl.focused_window(), focus_window,
+    return runraisenext(window_spec, run, ewmh_window.Window.windows(),
+                        ewmh_window.Window.focused_window(), focus_window,
                         others=others, ignore=ignore,
                         window_specs=all_window_specs)
