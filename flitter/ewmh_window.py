@@ -19,6 +19,15 @@ class Window(object):
         self.machine = ewmh_window.get_wm_client_machine()
         self.title = EWMH.getWmName(ewmh_window)
 
+        for attr in ('wm_class', 'machine', 'title'):
+            # Annoyingly getWmName() seems to alway return unicode strings
+            # _unless_ the window name contains non-ASCII characters then it
+            # returns a byte string (which will cause our code, which expects
+            # to be working with unicode strings, to crash later on).
+            value = getattr(self, attr)
+            if hasattr(value, 'decode'):
+                setattr(self, attr, value.decode())
+
     def __eq__(self, other):
         if not hasattr(other, "window_id"):
             return False
