@@ -1,0 +1,7 @@
+v1.0.1:
+- Use the ewhm Python library instead of wmctrl, so there are now no
+  non-Python dependencies
+- Add --current-desktop option
+- Add --ignore-minimized option
+- Use regexes to match window specs
+- Fix some crashes
