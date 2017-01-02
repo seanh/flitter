@@ -4,4 +4,5 @@ v1.0.1:
 - Add --current-desktop option
 - Add --ignore-minimized option
 - Use regexes to match window specs
+- Add --print-matching option
 - Fix some crashes
