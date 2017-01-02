@@ -80,4 +80,8 @@ class Window(object):
     @staticmethod
     def focused_window():
         """Return the currently focused window."""
-        return Window(EWMH.getActiveWindow())
+        active_window = EWMH.getActiveWindow()
+        if active_window is None:
+            return None
+        else:
+            return Window(active_window)
