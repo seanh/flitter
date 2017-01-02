@@ -57,7 +57,7 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/technical.html#install-requires-vs-requirements-files
     install_requires=[
-        "ewmh==0.1.4",
+        "ewmh==0.1.6",
         ],
 
     # If there are data files included in your packages that need to be
