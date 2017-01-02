@@ -353,10 +353,6 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
         # is focused. Loop to the app's next window.
         assert focused_window in matching_windows and len(matching_windows) > 1
 
-        # We never want to focused the currently-focused window next
-        # (since that would do nothing) so remove it.
-        matching_windows = [w for w in matching_windows if w != focused_window]
-
         unvisited = _unvisited_windows(matching_windows, open_windows)
         if unvisited:
             _focus_window(unvisited[0])
