@@ -85,3 +85,7 @@ class Window(object):
             return None
         else:
             return Window(active_window)
+
+
+def current_desktop():
+    return EWMH.getCurrentDesktop()

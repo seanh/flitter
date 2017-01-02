@@ -324,7 +324,7 @@ def runraisenext(window_spec, run_function, open_windows, focused_window,
                         if not matches_any(w, ignore)]
 
     if current_desktop:
-        current_desktop_ = ewmh_window.Window.focused_window().desktop
+        current_desktop_ = ewmh_window.current_desktop()
         matching_windows = [w for w in matching_windows
                             if w.desktop == current_desktop_]
 
