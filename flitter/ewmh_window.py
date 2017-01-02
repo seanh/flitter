@@ -33,6 +33,11 @@ class Window(object):
             return False
         return self.window_id == other.window_id
 
+    def __str__(self):
+        return '{window_id} {wm_class} {title}'.format(
+                window_id=self.window_id, wm_class=self.wm_class,
+                title=self.title)
+
     def focus(self):
         """Focus (activate) this window."""
         EWMH.setActiveWindow(self.ewmh_window)
